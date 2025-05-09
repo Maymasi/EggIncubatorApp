@@ -47,13 +47,34 @@ export const COLORS = {
     // Couleurs de fond
     backgroundLight: "#ffffff",
     backgroundTransparent: "rgba(255, 255, 255, 0.1)",
-    
+
     // Fonds spécifiques
-    bgGradientPrimary: "linear-gradient(to bottom, #7ed957 0%, #5dc264 100%)",
-    bgGradientOrange: "linear-gradient(to right, #FF9F43 0%, #FFB347 100%)",
-    bgGradientBlue: "linear-gradient(to right, #5BBCE4 0%, #7DCDF5 100%)",
-    bgGradientPurple: "linear-gradient(to right, #A55EEA 0%, #B57BF2 100%)",
-    bgGradientRed: "linear-gradient(to right, #FF6B6B 0%, #FF8E8E 100%)",
+      bgGradientPrimary: {
+        colors: ['#7ed957', '#c3e8b3'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 }, // "to right"
+      },
+      bgGradientOrange: {
+        colors: ['#FF9F43', '#f5c582'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 }, // "to right"
+      },
+      bgGradientBlue: {
+        colors: ['#5BBCE4', '#a2ddfa'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 },
+      },
+      bgGradientPurple: {
+        colors: ['#994ae8', '#c897fc'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 },
+      },
+      bgGradientRed: {
+        colors: ['#ff0000', '#cc0000'],
+        start: { x: 0, y: 0 },
+        end: { x: 1, y: 0 },
+      },
+
     
     // Fonds avec transparence
     bgWhite10: "rgba(255, 255, 255, 0.1)",
