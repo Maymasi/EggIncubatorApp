@@ -50,9 +50,9 @@ export const COLORS = {
 
     // Fonds spécifiques
       bgGradientPrimary: {
-        colors: ['#7ed957', '#c3e8b3'],
+        colors: ['#7ed957', '#28702d'],
         start: { x: 0, y: 0 },
-        end: { x: 1, y: 0 }, // "to right"
+        end: { x: 1, y: 1 }, // "to right"
       },
       bgGradientOrange: {
         colors: ['#FF9F43', '#f5c582'],

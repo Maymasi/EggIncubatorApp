@@ -15,6 +15,8 @@ import {
     Easing
 } from 'react-native';
 
+import { useNavigation } from "@react-navigation/native";
+
 import React, { useRef, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -34,46 +36,47 @@ const { width, height } = Dimensions.get('window');
 const WelcomePage = () => {
     const scrollRef = useRef(null);
     const [page, setPage] = useState(0);
-
+    const navigation = useNavigation();
     // 🎞️ Animation Values
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const slideUpAnim = useRef(new Animated.Value(30)).current;
+    const slideUpAnim = useRef(new Animated.Value(100)).current;
     const scaleAnim = useRef(new Animated.Value(0.9)).current;
     const buttonScale = useRef(new Animated.Value(1)).current;
     const imageTranslateX = useRef(new Animated.Value(0)).current;
     const imageTranslateY = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Reset values
-        fadeAnim.setValue(0);
-        slideUpAnim.setValue(30);
-        scaleAnim.setValue(0.9);
+        const animateIntro = () => {
+            fadeAnim.setValue(0);
+            slideUpAnim.setValue(30);
+            scaleAnim.setValue(0.9);
 
-        // Parallel animations
-        Animated.parallel([
-            Animated.timing(fadeAnim, {
-                toValue: 1,
-                duration: 800,
-                useNativeDriver: true,
-                easing: Easing.out(Easing.quad)
-            }),
-            Animated.timing(slideUpAnim, {
-                toValue: 0,
-                duration: 800,
-                useNativeDriver: true,
-                easing: Easing.out(Easing.quad)
-            }),
-            Animated.timing(scaleAnim, {
-                toValue: 1,
-                duration: 600,
-                useNativeDriver: true,
-                easing: Easing.out(Easing.quad)
-            })
-        ]).start();
+            Animated.parallel([
+                Animated.timing(fadeAnim, {
+                    toValue: 1,
+                    duration: 800,
+                    useNativeDriver: true,
+                    easing: Easing.out(Easing.quad)
+                }),
+                Animated.timing(slideUpAnim, {
+                    toValue: 0,
+                    duration: 1000,
+                    useNativeDriver: true,
+                    easing: Easing.out(Easing.quad)
+                }),
+                Animated.timing(scaleAnim, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                    easing: Easing.out(Easing.quad)
+                })
+            ]).start();
+        };
 
-        // Floating image animation
+        animateIntro();
+
         const isX = Math.random() > 0.5;
-        const anim = Animated.loop(
+        const floatingAnim = Animated.loop(
             Animated.sequence([
                 Animated.timing(isX ? imageTranslateX : imageTranslateY, {
                     toValue: 10,
@@ -86,20 +89,20 @@ const WelcomePage = () => {
                     duration: 2000,
                     useNativeDriver: true,
                     easing: Easing.inOut(Easing.quad),
-                }),
+                })
             ])
         );
-        anim.start();
 
-        // Auto-scroll every 7 seconds
+        floatingAnim.start();
+
         const interval = setInterval(() => {
             const nextPage = (page + 1) % pages.length;
-            scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
+            scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
             setPage(nextPage);
         }, 7000);
 
         return () => {
-            anim.stop();
+            floatingAnim.stop();
             clearInterval(interval);
         };
     }, [page]);
@@ -123,139 +126,143 @@ const WelcomePage = () => {
     const handleNextPress = (index) => {
         animateButtonPress();
         const nextPage = (index + 1) % pages.length;
-        scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
+        scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
         setPage(nextPage);
     };
 
     return (
-        <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            ref={scrollRef}
-            scrollEnabled={true}
-            scrollEventThrottle={16}
-            onScroll={(event) => {
-                const contentOffsetX = event.nativeEvent.contentOffset.x;
-                const newPage = Math.floor(contentOffsetX / width);
-                setPage(newPage);
-            }}
-        >
-            {pages.map((p, index) => (
-                <LinearGradient
-                    key={index}
-                    colors={p.backgroundColor.colors}
-                    start={p.backgroundColor.start}
-                    end={p.backgroundColor.end}
-                    style={[styles.page, { width }]}
-                >
-                    <SafeAreaView style={styles.center}>
-                        {/* 🖼️ Animated Image */}
-                        <Animated.View style={{
-                            opacity: fadeAnim,
-                            transform: [
-                                { translateY: slideUpAnim },
-                                { scale: scaleAnim },
-                                { translateX: imageTranslateX },
-                                { translateY: imageTranslateY }
-                            ]
-                        }}>
-                            <Image 
-                                source={p.image} 
-                                style={[styles.image, { resizeMode: 'contain' }]} 
-                            />
-                        </Animated.View>
-
-                        {/* 📝 Animated Text info */}
-                        <Animated.View style={[styles.info, {
-                            opacity: fadeAnim,
-                            transform: [{ translateY: slideUpAnim }]
-                        }]}>
-                            <Text style={styles.title}>{p.title}</Text>
-                            <Text style={styles.desc}>{p.description}</Text>
-                        </Animated.View>
-
-                        {/* 🔘 Page Indicators */}
-                        <View style={styles.dotsContainer}>
-                            {pages.map((_, i) => (
-                                <SmallCircle
-                                    key={i}
-                                    state={page === i ? 'active' : 'inactive'}
-                                    pressHandlerCircle={() => {
-                                        scrollRef.current?.scrollTo({ x: i * width, animated: true });
-                                        setPage(i);
-                                    }}
-                                />
-                            ))}
-                        </View>
-
-                        {/* 📍 Navigation Buttons */}
-                        {index !== pages.length - 1 ? (
-                            <Animated.View style={[styles.navigation, {
-                                opacity: fadeAnim,
-                                transform: [{ translateY: slideUpAnim }]
-                            }]}>
-                                <TouchableHighlight
-                                    onPress={() => handleNextPress(index)}
-                                    underlayColor="lightgray"
-                                    style={styles.button}
-                                >
-                                    <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                                        <View style={styles.nextRow}>
-                                            <Text style={styles.nextText}>Suivant</Text>
-                                            <AntDesign name="arrowright" size={17} color={COLORS.greenPrimary} />
-                                        </View>
-                                    </Animated.View>
-                                </TouchableHighlight>
-
-                                <TouchableOpacity
-                                    style={styles.skipButton}
-                                    onPress={() => {
-                                        animateButtonPress();
-                                        console.log('Skip button pressed');
-                                    }}
-                                >
-                                    <Text style={styles.skipText}>Passer l'introduction</Text>
-                                </TouchableOpacity>
-                            </Animated.View>
-                        ) : (
+        <View style={styles.container}>
+            <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                ref={scrollRef}
+                scrollEnabled={true}
+                scrollEventThrottle={16}
+                onScroll={(event) => {
+                    const contentOffsetX = event.nativeEvent.contentOffset.x;
+                    const newPage = Math.floor(contentOffsetX / width);
+                    setPage(newPage);
+                    
+                }}
+            >
+                {pages.map((p, index) => (
+                    <LinearGradient
+                        key={index}
+                        colors={p.backgroundColor.colors}
+                        start={p.backgroundColor.start}
+                        end={p.backgroundColor.end}
+                        style={[styles.page, { width }]}
+                    >
+                        <SafeAreaView style={styles.center}>
                             <Animated.View style={{
                                 opacity: fadeAnim,
-                                transform: [{ translateY: slideUpAnim }]
+                                transform: [
+                                    { translateY: slideUpAnim },
+                                    { scale: scaleAnim },
+                                    { translateX: imageTranslateX },
+                                    { translateY: imageTranslateY }
+                                ]
                             }}>
-                                <TouchableHighlight
-                                    onPress={() => {
-                                        animateButtonPress();
-                                        console.log('Last page button pressed');
-                                    }}
-                                    underlayColor="lightgray"
-                                    style={styles.button}
-                                >
-                                    <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-                                        <Text style={styles.nextText}>Commencer</Text>
-                                    </Animated.View>
-                                </TouchableHighlight>
+                                <Image
+                                    source={p.image}
+                                    style={[styles.image, { resizeMode: 'contain' }]}
+                                />
                             </Animated.View>
-                        )}
-                    </SafeAreaView>
-                </LinearGradient>
-            ))}
-        </ScrollView>
+
+                            <Animated.View style={[styles.info, {
+                                opacity: fadeAnim,
+                                transform: [{ translateY: slideUpAnim }]
+                            }]}> 
+                                <Text style={styles.title}>{p.title}</Text>
+                                <Text style={styles.desc}>{p.description}</Text>
+                            </Animated.View>
+
+                            <View style={styles.dotsContainer}>
+                                {pages.map((_, i) => (
+                                    <SmallCircle
+                                        key={i}
+                                        state={page === i ? 'active' : 'inactive'}
+                                        pressHandlerCircle={() => {
+                                            scrollRef.current?.scrollTo({ x: i * width, animated: true });
+                                            setPage(i);
+                                        }}
+                                    />
+                                ))}
+                            </View>
+
+                            {index !== pages.length - 1 ? (
+                                <Animated.View style={[styles.navigation, {
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideUpAnim }]
+                                }]}> 
+                                    <TouchableHighlight
+                                        onPress={() => handleNextPress(index)}
+                                        underlayColor="lightgray"
+                                        style={styles.button}
+                                    >
+                                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                                            <View style={styles.nextRow}>
+                                                <Text style={styles.nextText}>Suivant</Text>
+                                                <AntDesign name="arrowright" size={17} color={COLORS.greenPrimary} />
+                                            </View>
+                                        </Animated.View>
+                                    </TouchableHighlight>
+
+                                    <TouchableOpacity
+                                        style={styles.skipButton}
+                                        onPress={() => {
+                                            animateButtonPress();
+                                            navigation.navigate('Login')
+                                        }}
+                                    >
+                                        <Text style={styles.skipText}>Passer l'introduction</Text>
+                                    </TouchableOpacity>
+                                </Animated.View>
+                            ) : (
+                                <Animated.View style={{
+                                    opacity: fadeAnim,
+                                    transform: [{ translateY: slideUpAnim }]
+                                }}>
+                                    <TouchableHighlight
+                                        onPress={() => {
+                                            animateButtonPress();
+                                            navigation.navigate('Login')
+                                        }}
+                                        underlayColor="lightgray"
+                                        style={styles.button}
+                                    >
+                                        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
+                                            <Text style={styles.nextText}>Commencer</Text>
+                                        </Animated.View>
+                                    </TouchableHighlight>
+                                </Animated.View>
+                            )}
+                        </SafeAreaView>
+                    </LinearGradient>
+                ))}
+            </ScrollView>
+        </View>
     );
 };
 
 export default WelcomePage;
 
-
 // ============================
 // 🎨 Styles
 // ============================
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     page: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        height: height
+        height: '100%'
+
     },
     center: {
         flex: 1,
@@ -337,14 +344,13 @@ const styles = StyleSheet.create({
         fontFamily: FONTS.regular
     },
 });
-  
-  // ============================
-  // ✨ Signature
-  // ============================
-  /**
-   * ╔══════════════════════════════════╗
-   * ║   Designed & Crafted with ❤️    ║
-   * ║           by room67             ║
-   * ╚══════════════════════════════════╝
-   */
-  
+
+// ============================
+// ✨ Signature
+// ============================
+/**
+ * ╔══════════════════════════════════╗
+ * ║   Designed & Crafted with ❤️    ║
+ * ║           by room67             ║
+ * ╚══════════════════════════════════╝
+ */
