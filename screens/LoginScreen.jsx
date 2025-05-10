@@ -3,6 +3,9 @@
 // ==========================
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigation } from '@react-navigation/native';
+import { loginUser } from '../services/auth';
+import { ref, get } from 'firebase/database';
+import { database } from '../config/firebase';
 
 import {
   StyleSheet,
@@ -32,10 +35,19 @@ const { width } = Dimensions.get('window');
 const LoginScreen = () => {
   const [form, setForm] = useState({
     email: '',
-    passeword: ''
+    password: ''
   });
   const navigation=useNavigation();
-
+      // ==========================
+  //   INPUT CHANGES HANDLER
+  // ==========================
+    const handleChange = (field, text) => {
+    setForm(prevForm => {
+      const newForm = { ...prevForm, [field]: text };
+      console.log("Nouvel état:", newForm); 
+      return newForm;
+    });
+  };
   // ==========================
   //   ANIMATED VALUES
   // ==========================
@@ -68,42 +80,72 @@ const LoginScreen = () => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmailValid = emailRegex.test(form.email);
 
-  const handleLogin = () => {
-    if (!form.email || !form.passeword) {
-      Toast.show({
-        type: 'error',
-        text1: 'Champs requis',
-        text2: 'Veuillez remplir tous les champs pour continuer.',
-      });
-      return;
-    }
+const handleLogin = async () => {
+  // Validation des champs
+  if (!form.email || !form.password) {
+    Toast.show({
+      type: 'error',
+      text1: 'Champs requis',
+      text2: 'Veuillez remplir tous les champs pour continuer.',
+    });
+    return;
+  }
 
-    if (!isEmailValid) {
-      Toast.show({
-        type: 'error',
-        text1: 'Email invalide 📫',
-        text2: 'Veuillez entrer une adresse email valide (ex: exemple@mail.com).',
-      });
-      return;
-    }
+  if (!isEmailValid) {
+    Toast.show({
+      type: 'error',
+      text1: 'Email invalide 📫',
+      text2: 'Veuillez entrer une adresse email valide (ex: exemple@mail.com).',
+    });
+    return;
+  }
 
+  try {
+    // 1. Authentification via votre service
+    const user = await loginUser(form.email, form.password);
+    
+    // 2. Récupération des données utilisateur
+    const userRef = ref(database, `users/${user.uid}`);
+    const snapshot = await get(userRef);
+    const userData = snapshot.val();
 
-    const userExists = true;
-    if (!userExists) {
-      Toast.show({
-        type: 'error',
-        text1: 'Informations incorrectes',
-        text2: "Email ou mot de passe incorrect.",
-      });
-      return;
-    }
-
+    // 3. Feedback de succès
     Toast.show({
       type: 'success',
       text1: 'Connexion réussie',
-      text2: `Bienvenue, ${form.email} ! 🐣`,
+      text2: `Bienvenue, ${userData?.fullName || user.email} ! 🐣`,
+      visibilityTime: 2000,
+      onHide: () => {
+        // 4. Redirection après le Toast
+
+      }
     });
-  };
+
+  } catch (error) {
+    // Gestion fine des erreurs Firebase
+    let errorMessage = "Échec de la connexion";
+    
+    switch(error.code) {
+      case 'auth/user-not-found':
+        errorMessage = "Aucun compte associé à cet email";
+        break;
+      case 'auth/wrong-password':
+        errorMessage = "Mot de passe incorrect";
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = "Trop de tentatives. Réessayez plus tard";
+        break;
+      default:
+        console.error("Erreur technique:", error);
+    }
+
+    Toast.show({
+      type: 'error',
+      text1: 'Connexion échouée',
+      text2: errorMessage,
+    });
+  }
+};
 
   return (
     <LinearGradient
@@ -135,9 +177,7 @@ const LoginScreen = () => {
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
                 value={form.email}
-                onChangeText={(Text) => {
-                  setForm({ ...form, email: Text });
-                }}
+                onChangeText={(text)=>handleChange('email',text)}
               />
             </View>
 
@@ -151,10 +191,9 @@ const LoginScreen = () => {
                 secureTextEntry={true}
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
-                value={form.passeword}
-                onChangeText={(text) => {
-                  setForm({ ...form, passeword: text });
-                }}
+                value={form.password}
+                 onChangeText={(text)=>handleChange('password',text)}
+
                 maxLength={20}
               />
             </View>

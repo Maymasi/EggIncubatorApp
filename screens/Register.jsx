@@ -21,6 +21,9 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { LinearGradient } from 'expo-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { COLORS, SIZES } from '../constants/theme';
+import { registerUser } from '../services/auth'; 
+import { auth } from '../config/firebase';
+
 
 // ==========================
 //     DIMENSIONS SCREEN
@@ -36,7 +39,7 @@ const Register = () => {
   // ==========================
   const [form, setForm] = useState({
     email: '',
-    passeword: '',
+    password: '',
     name:'',
     farmName:''
   });
@@ -51,6 +54,19 @@ const Register = () => {
   const slideAnimForm = useRef(new Animated.Value(50)).current;
   const slideAnimGoogle = useRef(new Animated.Value(100)).current;
 
+    // ==========================
+  //   INPUT CHANGES HANDLER
+  // ==========================
+
+    const handleChange = (field, text) => {
+    setForm(prevForm => {
+      const newForm = { ...prevForm, [field]: text };
+      console.log("Nouvel état:", newForm); // Log synchronisé
+      return newForm;
+    });
+  };
+
+  
   useEffect(() => {
     Animated.timing(fadeAnimHeader, {
       toValue: 1,
@@ -77,54 +93,115 @@ const Register = () => {
   // ==========================
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
-  const isPasswordValid = passwordRegex.test(form.passeword);
+  const isPasswordValid = passwordRegex.test(form.password);
   const isEmailValid = emailRegex.test(form.email);
 
-  const handleLogin = () => {
-    if (!form.name || !form.email || !form.farmName || !form.passeword) {
-      Toast.show({
-        type: 'error',
-        text1: 'Champs requis',
-        text2: 'Veuillez remplir tous les champs pour continuer.',
-      });
-      return;
-    }
+  // const handleRegister = () => {
+  //   if (!form.name || !form.email || !form.farmName || !form.passeword) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Champs requis',
+  //       text2: 'Veuillez remplir tous les champs pour continuer.',
+  //     });
+  //     return;
+  //   }
 
-    if (!isEmailValid) {
-      Toast.show({
-        type: 'error',
-        text1: 'Email invalide 📫',
-        text2: 'Veuillez entrer une adresse email valide (ex: exemple@mail.com).',
-      });
-      return;
-    }
-    if (!isPasswordValid) {
-      Toast.show({
-        type: 'error',
-        text1: 'Mot de passe faible',
-        text2: 'Min. 8 caractères avec majuscules, chiffres et symboles.',
-      });
-      return;
-    }
+  //   if (!isEmailValid) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Email invalide 📫',
+  //       text2: 'Veuillez entrer une adresse email valide (ex: exemple@mail.com).',
+  //     });
+  //     return;
+  //   }
+  //   if (!isPasswordValid) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Mot de passe faible',
+  //       text2: 'Min. 8 caractères avec majuscules, chiffres et symboles.',
+  //     });
+  //     return;
+  //   }
 
 
-    const userExists = true;
-    if (!userExists) {
-        Toast.show({
-          type: 'error',
-          text1: `Échec de l'inscription`,
-          text2: 'Cette adresse email est déjà utilisée.',
-        });
-      return;
-    }
+  //   const userExists = true;
+  //   if (!userExists) {
+  //       Toast.show({
+  //         type: 'error',
+  //         text1: `Échec de l'inscription`,
+  //         text2: 'Cette adresse email est déjà utilisée.',
+  //       });
+  //     return;
+  //   }
+
+  //   Toast.show({
+  //     type: 'success',
+  //     text1: 'Compte créé',
+  //     text2: `Bienvenue, ${form.name} ! 🐥`,
+  //   });
+  // };
+const handleRegister = async () => {
+  if (!form.name || !form.email || !form.farmName || !form.password) {
+    Toast.show({
+      type: 'error',
+      text1: 'Champs requis',
+      text2: 'Veuillez remplir tous les champs pour continuer.',
+    });
+    return;
+  }
+
+  if (!isEmailValid) {
+    Toast.show({
+      type: 'error',
+      text1: 'Email invalide 📫',
+      text2: 'Veuillez entrer une adresse email valide (ex: exemple@mail.com).',
+    });
+    return;
+  }
+
+  if (!isPasswordValid) {
+    Toast.show({
+      type: 'error',
+      text1: 'Mot de passe faible',
+      text2: 'Min. 8 caractères avec majuscules, chiffres et symboles.',
+    });
+    return;
+  }
+
+  try {
+    await registerUser(
+      form.email,
+      form.password,
+      form.name,
+      form.farmName,
+      
+    );
 
     Toast.show({
       type: 'success',
       text1: 'Compte créé',
       text2: `Bienvenue, ${form.name} ! 🐥`,
+      onHide:()=>navigation.navigate('Login')
     });
-  };
 
+    // Optionnel : redirection vers login ou dashboard ici
+  } catch (error) {
+    let message = "Une erreur s'est produite";
+    if (error.code === 'auth/email-already-in-use') {
+      message = "Cette adresse email est déjà utilisée.";
+    } else if (error.code === 'auth/invalid-email') {
+      message = "Adresse email invalide.";
+    } else if (error.code === 'auth/weak-password') {
+      message = "Mot de passe trop faible.";
+    }
+
+    Toast.show({
+      type: 'error',
+      text1: `Échec de l'inscription`,
+      text2: message,
+    });
+  }
+};
   return (
     <LinearGradient
       colors={COLORS.bgGradientPrimary.colors}
@@ -155,10 +232,7 @@ const Register = () => {
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
                 value={form.name}
-                onChangeText={(Text) => {
-                  setForm({ ...form, name: Text });
-                  console.log(form)
-                }}
+                onChangeText={(text)=>handleChange('name',text)}
               />
             </View>
             {/* Champ Email */}
@@ -171,9 +245,7 @@ const Register = () => {
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
                 value={form.email}
-                onChangeText={(Text) => {
-                  setForm({ ...form, email: Text });
-                }}
+                 onChangeText={(text)=>handleChange('email',text)}
               />
             </View>
 
@@ -184,13 +256,10 @@ const Register = () => {
               </View>
               <TextInput
                 placeholder="Nom de la ferme"
-                secureTextEntry={true}
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
                 value={form.farmName}
-                onChangeText={(text) => {
-                  setForm({ ...form, farmName: text });
-                }}
+                 onChangeText={(text)=>handleChange('farmName',text)}
                 maxLength={20}
               />
             </View>
@@ -204,10 +273,9 @@ const Register = () => {
                 secureTextEntry={true}
                 placeholderTextColor={COLORS.bgWhite50}
                 style={styles.input}
-                value={form.passeword}
-                onChangeText={(text) => {
-                  setForm({ ...form, passeword: text });
-                }}
+                value={form.password}
+                
+                  onChangeText={(text)=>handleChange('password',text)}
                 maxLength={20}
               />
             </View>
@@ -217,7 +285,7 @@ const Register = () => {
           <TouchableHighlight
             underlayColor="lightgray"
             style={styles.ButtonConnect}
-            onPress={handleLogin}
+            onPress={handleRegister}
           >
             <Text style={styles.btnText}>Créer un compte</Text>
           </TouchableHighlight>
