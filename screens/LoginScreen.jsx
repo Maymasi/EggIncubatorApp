@@ -2,6 +2,8 @@
 //        IMPORTS
 // ==========================
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+
 import {
   StyleSheet,
   View,
@@ -13,7 +15,6 @@ import {
   TouchableHighlight,
   Animated
 } from 'react-native';
-
 import Feather from '@expo/vector-icons/Feather';
 import Entypo from '@expo/vector-icons/Entypo';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -33,6 +34,7 @@ const LoginScreen = () => {
     email: '',
     passeword: ''
   });
+  const navigation=useNavigation();
 
   // ==========================
   //   ANIMATED VALUES
@@ -169,7 +171,11 @@ const LoginScreen = () => {
 
           <View style={styles.row}>
             <Text style={styles.registerText}>Pas encore de compte ?</Text>
-            <Text style={[styles.link, styles.registerText]}>
+            <Text style={[styles.link, styles.registerText]}
+              onPress={()=>{
+                navigation.navigate('Register')
+              }}
+            >
               S'inscrire
             </Text>
           </View>

@@ -2,9 +2,10 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import WelcomePage from './screens/WelcomePage';
 import { COLORS } from './constants/theme';
-import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer } from "@react-navigation/native";
 import LoginScreen from './screens/LoginScreen';
+import Register from './screens/Register';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -24,6 +25,7 @@ export default function App() {
         >
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Welcome" component={WelcomePage} />
+          <Stack.Screen name="Register" component={Register} />
         </Stack.Navigator>
       </NavigationContainer>
       </>
