@@ -2,6 +2,7 @@ import  { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SIZES ,COLORS} from '../../constants/theme';
 import Controle from './tabs/Controle';
+import Historique from './tabs/Historique';
 
 const tabs = ['Contrôle', 'Historique', 'Paramètres'];
 
@@ -29,6 +30,7 @@ export default function CustomTabs() {
                 ))}
             </View>
             <View style={{ flex: 1 }}>
+                {/* <Historique/> */}
                 <Controle/>
             </View>
         </View>

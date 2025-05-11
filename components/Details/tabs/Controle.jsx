@@ -11,6 +11,11 @@ import { useState } from 'react';
 export default function Controle(){
     const [isAuto, setIsAuto] = useState(false);
     const [isVentilateur, setIsVentilateur] = useState(false);
+    const [rotation , setRotation] = useState(false);
+    // handlers
+    const handleRotation= ()=>{
+        setRotation(true)
+    }
     return(
         <ScrollView style={{ flex: 1 }} >
             <View style={styles.card}>
@@ -100,7 +105,7 @@ export default function Controle(){
                         <Text style={styles.secondaryTitle}>Tourner manuellement les œufs</Text>
                     </View>                    
                 </View>
-                <TouchableOpacity style={{ backgroundColor: COLORS.purple,padding:17,display:"flex",justifyContent:"center",alignItems:"center",borderRadius:20 }}>
+                <TouchableOpacity style={{ backgroundColor: COLORS.purple,padding:17,display:"flex",justifyContent:"center",alignItems:"center",borderRadius:20 }} onClick={handleRotation}>
                     <Text style={{color:COLORS.white,fontSize:SIZES.large,fontWeight:700}}>Tourner Maintenant</Text>
                 </TouchableOpacity>
             </View>            
