@@ -1,11 +1,17 @@
-import { View,Text,StyleSheet, Dimensions } from "react-native";
+import { View,Text,StyleSheet, Dimensions,FlatList } from "react-native";
 import { LineChart } from 'react-native-chart-kit';
 import { SIZES ,COLORS} from '../../../constants/theme';
 import DropDownPicker from 'react-native-dropdown-picker';
+// icons
+import Feather from '@expo/vector-icons/Feather';
+import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
 import React, { useState } from "react";
 
 const screenWidth = Dimensions.get("window").width;
-
+// data reperes
 const dataTemp = {
     labels: ["S1", "S2", "S3", "S4"],
     datasets: [
@@ -26,6 +32,7 @@ const dataHum = {
         }
     ],
 };
+// chart config
 const chartConfigTemp = {
     backgroundGradientFrom: COLORS.white,
     backgroundGradientTo: COLORS.white,
@@ -59,14 +66,58 @@ const chartConfigHum = {
     fillShadowGradient: "transparent", 
     fillShadowGradientOpacity: 0, 
 };
+// icons notifications
+const eventIcons = {
+    alert:<Feather name="alert-triangle" size={24} color={COLORS.red} />,
+    rotation:<FontAwesome6 name="arrow-rotate-right" size={24} color={COLORS.greenSecondary} />,
+    ventilateur:<FontAwesome5 name="fan" size={24} color={COLORS.blue} />,
+    humidité:<MaterialCommunityIcons name="water-check-outline" size={26} color={COLORS.blue} />,
+    température:<FontAwesome6 name="temperature-half" size={24} color={COLORS.orange} />
+}
+const getBackgroundColor = (type) => {
+    switch (type) {
+        case "alert":
+            return COLORS.red + '20'; 
+        case "rotation":
+            return COLORS.greenSecondary + '20';
+        case "ventilateur":
+            return COLORS.blue + '20';
+        case "humidité":
+            return COLORS.blue + '20';
+        case "température":
+            return COLORS.orange + '20';
+        default:
+            return COLORS.bgBlack10;
+    }
+};
 
 export default function Historique(){
+    const [notifications,setNotifications] = useState([
+        {id:1,type:"alert",message:"Température élevée",incubator:"Couveuse Secondaire",time:'10 min'},
+        {id:2,type:"rotation",message:"Rotation effectuée",incubator:"Couveuse Principale",time:'30 min'},
+        {id:3,type:"ventilateur",message:"Ventilateur activé",incubator:"Couveuse Principale",time:'1h'},
+        {id:4,type:"humidité",message:"Humidité ajustée",incubator:"Couveuse Secondaire",time:'2h'},
+        {id:5,type:"température",message:"Température ajustée",incubator:"Couveuse Principale",time:'3h'},
+
+    ])
     const [open, setOpen] = useState(false);
     const [value, setValue] = useState("Couveuse Principale");
     const [items, setItems] = useState([
         { label: 'Toutes les couveuses', value: 'Toutes les couveuses' },
         { label: 'Couveuse Principale', value: 'Couveuse Principale' },
     ]);
+
+    const renderItem = ({item}) => {
+        return(
+            <View style={styles.item}>
+                <View style={[styles.icon, { backgroundColor: getBackgroundColor(item.type) }]}>{eventIcons[item.type]}</View>
+                <View style={styles.textContainer}>
+                    <Text style={styles.content}>{item.message}</Text>
+                    <Text style={styles.couveuse}>{item.incubator} • {item.time}</Text>
+                </View>
+            </View>
+        );
+    }
     return (
         <View>
             <View style={styles.SelectCard}>
@@ -143,6 +194,14 @@ export default function Historique(){
                     />
                 </View>
             </View>
+            <View style={styles.notificationContainer}>
+                <Text style={{fontSize:21,fontWeight:600,marginBottom:20}}>Événements récents</Text>
+                <FlatList
+                    data={notifications}
+                    keyExtractor={item => item.id}
+                    renderItem={renderItem}
+                />
+            </View>
         </View>
     );
 }
@@ -173,5 +232,37 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         overflow:"hidden",
         marginTop:20
+    },
+    notificationContainer:{
+        backgroundColor:"white",
+        padding:20,
+        marginTop:20,
+        borderRadius:20,
+
+    },
+    item:{
+        display:"flex",
+        flexDirection:"row",
+        alignItems:"center",
+        gap:14,
+        marginVertical:7,
+    },
+    content:{
+        fontSize:18,
+        fontWeight:600
+    },
+    couveuse:{
+        color:COLORS.bgBlack30
+    },
+    icon:{
+        height:50,
+        width:50,
+        borderRadius:"50%",
+        display:"flex",
+        justifyContent:"center",
+        alignItems:"center"
+    },
+    textContainer:{
+        
     }
 })
