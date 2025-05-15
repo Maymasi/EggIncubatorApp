@@ -5,7 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 
-
 const EditProfileScreen = () => {
   const navigation = useNavigation();
   const [image, setImage] = useState(null);
@@ -26,6 +25,12 @@ const EditProfileScreen = () => {
       const selectedImage = result.assets[0].uri;
       setImage(selectedImage);
     }
+  };
+
+  const handleSave = () => {
+    navigation.navigate('Profile', {
+      profileImage: image,
+    });
   };
 
   return (
@@ -64,6 +69,7 @@ const EditProfileScreen = () => {
             onChangeText={setEmail}
           />
         </View>
+
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Mot de passe</Text>
           <View style={styles.passwordContainer}>
@@ -84,7 +90,7 @@ const EditProfileScreen = () => {
           <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
             <Text style={styles.cancelText}>Annuler</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton}>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
             <Text style={styles.saveText}>Enregistrer</Text>
           </TouchableOpacity>
         </View>
@@ -203,3 +209,4 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
 });
+

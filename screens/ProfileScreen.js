@@ -10,14 +10,13 @@ const ProfileScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
-      // Vérifie si une image a été passée depuis la page de modification
-      if (navigation?.getState) {
-        const routes = navigation.getState().routes;
-        const currentRoute = routes[routes.length - 1];
-        const imageFromEdit = currentRoute.params?.profileImage;
-        if (imageFromEdit) {
-          setProfileImage(imageFromEdit);
-        }
+      const state = navigation.getState?.();
+      const routes = state?.routes || [];
+      const currentRoute = routes[routes.length - 1];
+      const imageFromEdit = currentRoute?.params?.profileImage;
+
+      if (imageFromEdit) {
+        setProfileImage(imageFromEdit);
       }
     }, [navigation])
   );
@@ -64,7 +63,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.greenPrimary,
     padding: 30,
-    
   },
   header: {
     color: COLORS.white,
