@@ -83,17 +83,24 @@ export function listenToCouveusesGereesParUser(userId, callback) {
           etat = "alerte critique";
         }
 
+        // Calcul des jours écoulés depuis la date d'ajout
+        const dateAjout = localData.dateAjout ? new Date(localData.dateAjout) : new Date();
+        const aujourdHui = new Date();
+        const joursEcoules = Math.floor((aujourdHui - dateAjout) / (1000 * 60 * 60 * 24));
+        const dureeIncubation = localData.dureeIncubation || 21;
+
         return {
+          id: idCouveuse,
           name: localData.nom || "Sans nom",
           eggNumber: localData.nbOeufs || 0,
           etat: etat,
-          jour: `${localData.joursEcoules || 0}/${localData.dureeIncubation || 21}`,
+          jour: `${joursEcoules}/${dureeIncubation}`,
           temp: lastMesure.temperature || 0,
           hum: lastMesure.humidite || 0,
           ventilateur: globalData.Config?.fanState === "on" ? "Actif" : "Inactif",
           rotation: lastRotationTime,
-          progress: Math.round(((localData.joursEcoules || 0) / (localData.dureeIncubation || 21)) * 100),
-          eclosionPeriode: (localData.dureeIncubation || 21) - (localData.joursEcoules || 0)
+          progress: Math.min(1, Math.max(0, joursEcoules / dureeIncubation)),
+          eclosionPeriode: dureeIncubation - joursEcoules
         };
       })
     );
@@ -112,5 +119,116 @@ export function listenToCouveusesGereesParUser(userId, callback) {
   return () => {
     off(userCouveusesRef);
   };
+}
+
+
+
+/**
+ * Récupère les données pour afficher la carte d'une couveuse spécifique
+ * @param {string} userId - ID de l'utilisateur
+ * @param {string} couveuseId - ID de la couveuse
+ * @param {function} callback - Fonction de callback avec les données
+ * @returns {function} Fonction pour arrêter l'écoute
+ */
+export function listenToCouveuseCardData(userId, couveuseId, callback) {
+  if (!userId || !couveuseId) return () => {};
+
+  // Références aux données nécessaires
+  const userCouveuseRef = ref(database, `users/${userId}/couveusesGereses/${couveuseId}`);
+  const couveuseGlobalRef = ref(database, `Couveuses/${couveuseId}`);
+  
+  let userData = {};
+  let globalData = {};
+
+  const updateCallback = () => {
+    if (!userData || !globalData) return;
+
+    // Dernière mesure de température/humidité
+    const historyMesures = globalData.history?.mesures || {};
+    const lastMesureKey = Object.keys(historyMesures).pop();
+    const lastMesure = lastMesureKey ? historyMesures[lastMesureKey] : {};
+
+    // Dernière rotation
+    const historyActions = globalData.history?.action || {};
+    let lastRotationTime = "00:00";
+    for (const [timestamp, action] of Object.entries(historyActions).reverse()) {
+      if (action.servo === "rotation") {
+        const timePart = timestamp.split('_')[1].substring(0, 5);
+        lastRotationTime = timePart.replace('-', ':');
+        break;
+      }
+    }
+
+    // Calcul des jours écoulés depuis la date d'ajout
+    const dateAjout = userData.dateAjout ? new Date(userData.dateAjout) : new Date();
+    const aujourdHui = new Date();
+    const joursEcoules = Math.floor((aujourdHui - dateAjout) / (1000 * 60 * 60 * 24));
+    const dureeIncubation = userData.dureeIncubation || 21;
+    const joursRestants = Math.max(0, dureeIncubation - joursEcoules); // Évite les valeurs négatives
+
+    // Données pour la carte
+    const cardData = {
+      eggNumber: userData.nbOeufs || 0,
+      currentDay: joursEcoules,
+      totalDays: dureeIncubation,
+      temperature: lastMesure.temperature || 0,
+      humidity: lastMesure.humidite || 0,
+      lastRotation: lastRotationTime,
+      daysToHatch: joursRestants,
+      progress: Math.min(1, Math.max(0, joursEcoules / dureeIncubation)) // Garantit une valeur entre 0 et 1
+    };
+
+    callback(cardData);
+  };
+
+  // Écoute des données utilisateur
+  const userListener = onValue(userCouveuseRef, (snapshot) => {
+    userData = snapshot.val() || {};
+    updateCallback();
+  });
+
+  // Écoute des données globales
+  const globalListener = onValue(couveuseGlobalRef, (snapshot) => {
+    globalData = snapshot.val() || {};
+    updateCallback();
+  });
+
+  // Retourne une fonction pour arrêter les listeners
+  return () => {
+    off(userCouveuseRef);
+    off(couveuseGlobalRef);
+  };
+}
+
+
+/**
+ * Écoute en temps réel la configuration d'une couveuse
+ */
+export function listenToCouveuseConfig(idCouveuse, callback) {
+  const configRef = ref(database, `Couveuses/${idCouveuse}/Config`);
+  const unsubscribe = onValue(configRef, (snapshot) => {
+    callback(snapshot.val());
+  });
+  return () => unsubscribe(); // Permet de détacher le listener
+}
+
+/**
+ * Met à jour la configuration d'une couveuse
+ */
+export async function updateCouveuseConfig(idCouveuse, updates) {
+  if (!idCouveuse) throw new Error("ID de couveuse requis");
+  const configRef = ref(database, `Couveuses/${idCouveuse}/Config`);
+  await update(configRef, updates);
+}
+
+// ✅ Met à jour manualState si nécessaire
+export async function turnManualStateOn(idCouveuse) {
+  const configRef = ref(database, `Couveuses/${idCouveuse}/Config`);
+  const snapshot = await get(configRef);
+  const currentConfig = snapshot.val();
+
+  if (currentConfig?.manualState !== "on") {
+    await update(configRef, { manualState: "on" });
+  }
 }
 

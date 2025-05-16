@@ -7,8 +7,11 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { SIZES ,COLORS} from '../../constants/theme';
 import ProgressBar from '../Details/ProgressBar';
 import Entypo from '@expo/vector-icons/Entypo';
+import { useNavigation } from '@react-navigation/native';
 
-const CardCouveuse = ({Name,EggNumber,Etat,Jour,Temp,Hum,Ventilateur,Rotation,Progress,EclosionPeriode}) => {
+
+const CardCouveuse = ({Name,EggNumber,Etat,Jour,Temp,Hum,Ventilateur,Rotation,Progress,EclosionPeriode,id}) => {
+    const navigation =useNavigation();
     return (
         <View>
             <View style={styles.card}>
@@ -63,7 +66,12 @@ const CardCouveuse = ({Name,EggNumber,Etat,Jour,Temp,Hum,Ventilateur,Rotation,Pr
                             <FontAwesome6 name="calendar" size={17} color={COLORS.bgBlack50} />
                             <Text style={{fontSize:16,color:COLORS.bgBlack50,fontWeight:400}}>Eclosion dans {EclosionPeriode} jours</Text>
                         </View>
-                        <TouchableOpacity style={{display:"flex",flexDirection:"row",alignItems:"center",gap:10}}>
+                        <TouchableOpacity style={{display:"flex",flexDirection:"row",alignItems:"center",gap:10}}
+                            onPress={()=>{
+                                console.log(id)
+                                navigation.navigate('Details', { idCouveuse: id ,Name});
+                            }}
+                        >
                             <Text style={{fontSize:17,fontWeight:500,color:COLORS.greenSecondary}}>Gérer</Text>
                             <AntDesign name="right" size={15} color={COLORS.greenSecondary} />
                         </TouchableOpacity>

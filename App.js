@@ -8,6 +8,7 @@ import LoginScreen from './screens/LoginScreen';
 import Register from './screens/Register';
 import AccueilScreen from './screens/AccueilScreen'
 import { AuthProvider } from './contexts/AuthContext';
+import Details from './screens/CouveusesDetails/Details'
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -30,7 +31,7 @@ export default function App() {
           <Stack.Screen name="Welcome" component={WelcomePage} />
           <Stack.Screen name="Register" component={Register} />
           <Stack.Screen name="Home" component={AccueilScreen} />
-
+          <Stack.Screen name="Details" component={Details} />
         </Stack.Navigator>
       </NavigationContainer>
       </AuthProvider>

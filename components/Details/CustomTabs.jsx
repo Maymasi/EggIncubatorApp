@@ -7,7 +7,7 @@ import CouveuseParam from './tabs/CouveuseParam';
 
 const tabs = ['Contrôle', 'Historique', 'Paramètres'];
 
-export default function CustomTabs() {
+export default function CustomTabs({id}) {
     const [activeTab, setActiveTab] = useState('Contrôle');
     return (
         <View style={{ flex: 1 }}>
@@ -31,9 +31,9 @@ export default function CustomTabs() {
                 ))}
             </View>
             <View style={{ flex: 1 }}>
-                {activeTab === 'Contrôle' && <Controle />}
-                {activeTab === 'Historique' && <Historique />}
-                {activeTab === 'Paramètres' && <CouveuseParam />}
+                {activeTab === 'Contrôle' && <Controle id={id}/>}
+                {activeTab === 'Historique' && <Historique  />}
+                {activeTab === 'Paramètres' && <CouveuseParam id={id} />}
             </View>
         </View>
     );
