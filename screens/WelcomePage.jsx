@@ -24,7 +24,8 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 import pages from '../constants/data';
 import SmallCircle from '../components/smallCircle';
-
+import { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 // ============================
 // 📱 Constants
 // ============================
@@ -34,6 +35,11 @@ const { width, height } = Dimensions.get('window');
 // 🚀 WelcomePage Component
 // ============================
 const WelcomePage = () => {
+    const { user, isLoading } = useContext(AuthContext);
+
+    const handleStart = () => {
+        navigation.navigate(user ? 'Home' : 'Login');
+    };
     const scrollRef = useRef(null);
     const [page, setPage] = useState(0);
     const navigation = useNavigation();
@@ -213,7 +219,7 @@ const WelcomePage = () => {
                                         style={styles.skipButton}
                                         onPress={() => {
                                             animateButtonPress();
-                                            navigation.navigate('Login')
+                                            handleStart();
                                         }}
                                     >
                                         <Text style={styles.skipText}>Passer l'introduction</Text>
@@ -227,7 +233,7 @@ const WelcomePage = () => {
                                     <TouchableHighlight
                                         onPress={() => {
                                             animateButtonPress();
-                                            navigation.navigate('Login')
+                                            handleStart();
                                         }}
                                         underlayColor="lightgray"
                                         style={styles.button}

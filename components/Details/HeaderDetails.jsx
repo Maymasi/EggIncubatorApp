@@ -1,8 +1,20 @@
 import { View,StyleSheet,Text, Pressable,TouchableOpacity  } from "react-native";
-import { useState } from "react";
+import { useState,useContext } from "react";
 import {COLORS,SIZES} from "../../constants/theme";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { AuthContext } from '../../contexts/AuthContext';
+
 export default function HeaderDetails(){
+      const { 
+  user,           // → { uid, email, displayName, farmName, couveusesGeres... }
+  isLoading,      // → true/false
+  error,          // → Dernière erreur
+  login,          // → (email, password) => Promise
+  register,       // → (email, password, fullName, farmName) => Promise
+  logout,         // => () => Promise
+  refreshUser     // → Force la mise à jour des données
+} = useContext(AuthContext);
+
     const [hovered, setHovered] = useState(false);
     const [notifVal , setnotifVal] = useState(3);
     const [userName, setUserName]= useState("Pierre Dupont");
@@ -13,7 +25,7 @@ export default function HeaderDetails(){
                 </View>
                 <View>
                     <Text style={{color:COLORS.bgWhite80,fontWeight:400,fontSize:SIZES.large}}>Bonjour</Text>
-                    <Text style={styles.name}>{userName}</Text>
+                    <Text style={styles.name}>{user.displayName}</Text>
                 </View>
             </View>
             <View style={styles.notification}>
@@ -45,8 +57,8 @@ const styles = StyleSheet.create({
         // backgroundColor:COLORS.gray,
         display:"flex",
         flexDirection:"row",
-        justifyContent:"space-between",
-        alignItems:"center"
+        alignItems:"center",
+        gap:SIZES.x
     },
     pdp : {
         backgroundColor:COLORS.grayLight,

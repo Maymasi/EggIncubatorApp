@@ -1,86 +1,115 @@
-import { useState } from 'react';
-import {View,Text,TextInput,TouchableOpacity,StyleSheet} from 'react-native';
+import { useState,useContext } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import FontAwesome6 from '@expo/vector-icons/FontAwesome6';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { COLORS, SIZES,FONTS } from '../../constants/theme';
+import { COLORS, SIZES, FONTS } from '../../constants/theme';
+import { AuthContext } from '../../contexts/AuthContext';
+import { addCouveuse } from '../../services/couveuseServices';
 
 export default function AddCouveuse() {
-    const [nom, setNom] = useState('');
-    const [identifiant, setIdentifiant] = useState('');
-    const [nbOeufs, setNbOeufs] = useState('');
-    const [dureeIncubation, setDureeIncubation] = useState('');
-    const [date, setDate] = useState('Aujourd\'hui');
-    const [heure, setHeure] = useState('Maintenant');
+  const { user } =useContext(AuthContext);
 
-    const handleAdd = () => {
-    };
+  const [nom, setNom] = useState('');
+  const [identifiant, setIdentifiant] = useState('');
+  const [nbOeufs, setNbOeufs] = useState('');
+  const [dureeIncubation, setDureeIncubation] = useState('');
+  const [date, setDate] = useState('Aujourd\'hui');
+  const [heure, setHeure] = useState('Maintenant');
 
-    return (
-        <View style={styles.container}>
-        <View style={styles.header}>
-            <Text style={styles.title}>Ajouter une couveuse</Text>
-        </View>
+  const handleAdd = async () => {
+    if (!nom || !identifiant || !nbOeufs || !dureeIncubation) {
+      Alert.alert("Champs manquants", "Merci de remplir tous les champs obligatoires.");
+      return;
+    }
 
-        <Text style={styles.label}>Nom de la couveuse</Text>
-        <TextInput
+    try {
+      await addCouveuse(user.uid, identifiant, {
+        nom,
+        nbOeufs: parseInt(nbOeufs),
+        dureeIncubation: parseInt(dureeIncubation),
+        dateDebut: date,
+        heureDebut: heure,
+        dateAjout: Date.now(),
+      });
+
+      Alert.alert("✅ Succès", "La couveuse a été ajoutée !");
+      // Optionnel : reset du formulaire
+      setNom('');
+      setIdentifiant('');
+      setNbOeufs('');
+      setDureeIncubation('');
+    } catch (error) {
+      Alert.alert("❌ Erreur", error.message);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Ajouter une couveuse</Text>
+      </View>
+
+      <Text style={styles.label}>Nom de la couveuse</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ex: Couveuse Principale"
+        value={nom}
+        onChangeText={setNom}
+      />
+
+      <Text style={styles.label}>Identifiant unique</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ex: INC-123456"
+        value={identifiant}
+        onChangeText={setIdentifiant}
+      />
+      <Text style={styles.helperText}>
+        L'identifiant se trouve généralement sous la couveuse ou dans sa documentation
+      </Text>
+
+      <View style={styles.row}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Nombre d'œufs</Text>
+          <TextInput
             style={styles.input}
-            placeholder="Ex: Couveuse Principale"
-            value={nom}
-            onChangeText={setNom}
-        />
-
-        <Text style={styles.label}>Identifiant unique</Text>
-        <TextInput
+            keyboardType="numeric"
+            value={nbOeufs}
+            onChangeText={setNbOeufs}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Durée d'incubation (jours)</Text>
+          <TextInput
             style={styles.input}
-            placeholder="Ex: INC-123456"
-            value={identifiant}
-            onChangeText={setIdentifiant}
-        />
-        <Text style={styles.helperText}>
-            L'identifiant se trouve généralement sous la couveuse ou dans sa documentation
-        </Text>
+            keyboardType="numeric"
+            value={dureeIncubation}
+            onChangeText={setDureeIncubation}
+          />
+        </View>
+      </View>
 
-        <View style={styles.row}>
-            <View style={styles.inputGroup}>
-            <Text style={styles.label}>Nombre d'œufs</Text>
-            <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={nbOeufs}
-                onChangeText={setNbOeufs}
-            />
-            </View>
-            <View style={styles.inputGroup}>
-            <Text style={styles.label}>Durée d'incubation (jours)</Text>
-            <TextInput
-                style={styles.input}
-                keyboardType="numeric"
-                value={dureeIncubation}
-                onChangeText={setDureeIncubation}
-            />
-            </View>
-        </View>
+      <Text style={styles.label}>Date de début d'incubation</Text>
+      <View style={styles.row}>
+        <TouchableOpacity style={styles.dateButton}>
+          <FontAwesome6 name="calendar" size={20} color="black" />
+          <Text style={styles.dateButtonText}>{date}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.dateButton}>
+          <Ionicons name="time-outline" size={20} color="black" />
+          <Text style={styles.dateButtonText}>{heure}</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Text style={styles.label}>Date de début d'incubation</Text>
-        <View style={styles.row}>
-            <TouchableOpacity style={styles.dateButton}>
-            <FontAwesome6 name="calendar" size={20} color="black" />
-            <Text style={styles.dateButtonText}>{date}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.dateButton}>
-            <Ionicons name="time-outline" size={20} color="black" />
-            <Text style={styles.dateButtonText}>{heure}</Text>
-            </TouchableOpacity>
-        </View>
-
-        <View style={styles.buttonRow}>
-            <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-            <Text style={styles.addText}>Ajouter</Text>
-            </TouchableOpacity>
-        </View>
-        </View>
-    );
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+          <Text style={styles.addText}>Ajouter</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 }
+
 
 const styles = StyleSheet.create({
     container: {

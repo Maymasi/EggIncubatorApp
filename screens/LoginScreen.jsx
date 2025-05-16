@@ -1,12 +1,12 @@
 // ==========================
 //        IMPORTS
 // ==========================
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect,useContext } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { loginUser } from '../services/auth';
 import { ref, get } from 'firebase/database';
 import { database } from '../config/firebase';
-
+import { AuthContext } from '../contexts/AuthContext';
 import {
   StyleSheet,
   View,
@@ -33,6 +33,15 @@ const { width } = Dimensions.get('window');
 //      LOGIN COMPONENT
 // ==========================
 const LoginScreen = () => {
+  const { 
+  user,           // → { uid, email, displayName, farmName, couveusesGeres... }
+  isLoading,      // → true/false
+  error,          // → Dernière erreur
+  login,          // → (email, password) => Promise
+  register,       // → (email, password, fullName, farmName) => Promise
+  logout,         // => () => Promise
+  refreshUser     // → Force la mise à jour des données
+} = useContext(AuthContext);
   const [form, setForm] = useState({
     email: '',
     password: ''
@@ -102,12 +111,8 @@ const handleLogin = async () => {
 
   try {
     // 1. Authentification via votre service
-    const user = await loginUser(form.email, form.password);
-    
-    // 2. Récupération des données utilisateur
-    const userRef = ref(database, `users/${user.uid}`);
-    const snapshot = await get(userRef);
-    const userData = snapshot.val();
+    const user = await login(form.email, form.password); // Tout est géré automatiquement
+    const userData = user;
 
     // 3. Feedback de succès
     Toast.show({
@@ -117,6 +122,7 @@ const handleLogin = async () => {
       visibilityTime: 2000,
       onHide: () => {
         // 4. Redirection après le Toast
+        navigation.navigate('Home')
 
       }
     });

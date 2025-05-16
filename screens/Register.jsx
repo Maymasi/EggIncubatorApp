@@ -1,7 +1,7 @@
 // ==========================
 //        IMPORTS
 // ==========================
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect,useContext} from 'react';
 import { useNavigation } from '@react-navigation/native';
 import {
   StyleSheet,
@@ -23,7 +23,7 @@ import Toast from 'react-native-toast-message';
 import { COLORS, SIZES } from '../constants/theme';
 import { registerUser } from '../services/auth'; 
 import { auth } from '../config/firebase';
-
+import { AuthContext } from '../contexts/AuthContext';
 
 // ==========================
 //     DIMENSIONS SCREEN
@@ -34,6 +34,8 @@ const { width } = Dimensions.get('window');
 //      Register COMPONENT
 // ==========================
 const Register = () => {
+
+    const {register}= useContext(AuthContext);
   // ==========================
   //   state form
   // ==========================
@@ -169,13 +171,8 @@ const handleRegister = async () => {
   }
 
   try {
-    await registerUser(
-      form.email,
-      form.password,
-      form.name,
-      form.farmName,
-      
-    );
+    await register(form.email, form.password, form.name, form.farmName);
+
 
     Toast.show({
       type: 'success',
