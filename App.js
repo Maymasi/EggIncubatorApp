@@ -9,6 +9,12 @@ import Register from './screens/Register';
 import AccueilScreen from './screens/AccueilScreen'
 import { AuthProvider } from './contexts/AuthContext';
 import Details from './screens/CouveusesDetails/Details'
+import ConnecteApropos from './screens/ConnecteApropos';
+import ProfileScreen from './screens/ProfileScreen';
+import EditProfileScreen from './screens/EditProfileScreen';
+import FAQPage from './screens/FAQPage';
+import NotificationsScreen from './screens/NotificationsScreen';
+
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -44,3 +50,4 @@ const styles = StyleSheet.create({
     flex:1
   },
 });
+

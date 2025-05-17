@@ -5,7 +5,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { AuthContext } from '../../contexts/AuthContext';
 
 export default function HeaderDetails(){
-      const { 
+    const { 
   user,           // → { uid, email, displayName, farmName, couveusesGeres... }
   isLoading,      // → true/false
   error,          // → Dernière erreur
