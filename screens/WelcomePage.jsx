@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 
 import { useNavigation } from "@react-navigation/native";
+import LottieView from 'lottie-react-native';
 
 import React, { useRef, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -103,7 +104,7 @@ const WelcomePage = () => {
 
         const interval = setInterval(() => {
             const nextPage = (page + 1) % pages.length;
-            scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
+            scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
             setPage(nextPage);
         }, 7000);
 
@@ -132,7 +133,7 @@ const WelcomePage = () => {
     const handleNextPress = (index) => {
         animateButtonPress();
         const nextPage = (index + 1) % pages.length;
-        scrollRef.current?.scrollTo({ x: nextPage * width, animated: false });
+        scrollRef.current?.scrollTo({ x: nextPage * width, animated: true });
         setPage(nextPage);
     };
 
@@ -147,10 +148,16 @@ const WelcomePage = () => {
                 scrollEventThrottle={16}
                 onScroll={(event) => {
                     const contentOffsetX = event.nativeEvent.contentOffset.x;
-                    const newPage = Math.floor(contentOffsetX / width);
+                    const newPage = Math.round(contentOffsetX / width);
                     setPage(newPage);
                     
                 }}
+                onMomentumScrollEnd={(event) => {
+                    const contentOffsetX = event.nativeEvent.contentOffset.x;
+                    const newPage = Math.round(contentOffsetX / width);
+                    setPage(newPage);
+                }}
+        
             >
                 {pages.map((p, index) => (
                     <LinearGradient
@@ -277,8 +284,8 @@ const styles = StyleSheet.create({
         padding: SIZES.xLarge,
     },
     image: {
-        width: 180,
-        height: 180,
+        width: 300,
+        height: 300,
         marginBottom: SIZES.large
     },
     info: {

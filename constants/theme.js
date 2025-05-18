@@ -50,22 +50,22 @@ export const COLORS = {
 
     // Fonds spécifiques
       bgGradientPrimary: {
-        colors: ['#7ed957', '#28702d'],
+        colors: ['#7ed957', '#7ed957'],
         start: { x: 0, y: 0 },
         end: { x: 1, y: 1 }, // "to right"
       },
       bgGradientOrange: {
-        colors: ['#FF9F43', '#f5c582'],
+        colors: ['#FFA43A', '#FFA43A'],
         start: { x: 0, y: 0 },
         end: { x: 1, y: 0 }, // "to right"
       },
       bgGradientBlue: {
-        colors: ['#5BBCE4', '#a2ddfa'],
+        colors: ['#5BBCE4', '#5BBCE4'],
         start: { x: 0, y: 0 },
         end: { x: 1, y: 0 },
       },
       bgGradientPurple: {
-        colors: ['#994ae8', '#c897fc'],
+        colors: ['#A15CED', '#A15CED'],
         start: { x: 0, y: 0 },
         end: { x: 1, y: 0 },
       },
