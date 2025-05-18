@@ -57,11 +57,11 @@ export const loginUser = async (email, password) => {
     return userCredential.user;
 
   } catch (error) {
-    console.error("Erreur connexion:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
+    // console.error("Erreur connexion:", {
+    //   message: error.message,
+    //   code: error.code,
+    //   stack: error.stack
+    // });
     throw error;
   }
 };

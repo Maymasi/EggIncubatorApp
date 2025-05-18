@@ -1,8 +1,10 @@
-import { View,StyleSheet,Text, Pressable,TouchableOpacity  } from "react-native";
+import { View,StyleSheet,Text, Pressable,TouchableOpacity,SafeAreaView  } from "react-native";
 import { useState,useContext } from "react";
 import {COLORS,SIZES} from "../../constants/theme";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { AuthContext } from '../../contexts/AuthContext';
+import { useNavigation } from "@react-navigation/native";
 
 export default function HeaderDetails(){
     const { 
@@ -14,12 +16,12 @@ export default function HeaderDetails(){
   logout,         // => () => Promise
   refreshUser     // → Force la mise à jour des données
 } = useContext(AuthContext);
-
+const navigation=useNavigation();
     const [hovered, setHovered] = useState(false);
     const [notifVal , setnotifVal] = useState(3);
     const [userName, setUserName]= useState("Pierre Dupont");
     return(
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.containerInfo}>
                 <View style={styles.pdp}>
                 </View>
@@ -32,14 +34,17 @@ export default function HeaderDetails(){
                 <TouchableOpacity
                     style={styles.notifContainer}
                     activeOpacity={0.4}
+                    onPress={()=>{
+                        navigation.navigate('Profile')
+                    }}
                 >
-                    <Ionicons name="notifications-outline" color="white" size={25}/>
+                    <FontAwesome5 name="user-cog" size={24} color="white" />
                     <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{notifVal}</Text>
+                        <AntDesign name="dingding" size={13} color="white" />
                     </View>
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 const styles = StyleSheet.create({
@@ -86,7 +91,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: 'red',
+    backgroundColor: COLORS.orange,
     borderRadius: 10,
     width: 20,
     height: 20,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, TextInput, SafeAreaView, ScrollView } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -12,6 +12,7 @@ const EditProfileScreen = () => {
   const [email, setEmail] = useState('pierre.dupont@example.com');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [activeField, setActiveField] = useState('');
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -33,69 +34,96 @@ const EditProfileScreen = () => {
     });
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Modifier le profil</Text>
-      <View style={styles.card}>
-        <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
-          {image ? (
-            <Image source={{ uri: image }} style={styles.profileImage} />
-          ) : (
-            <View style={styles.defaultImage}>
-              <Ionicons name="person" size={60} color={COLORS.greenPrimary} />
-              <View style={styles.editIcon}>
-                <Ionicons name="pencil" size={14} color={COLORS.white} />
-              </View>
-            </View>
-          )}
-          <Text style={styles.changeText}>Changer la photo de profil</Text>
-        </TouchableOpacity>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nom complet</Text>
-          <TextInput
-            style={styles.input}
-            value={fullName}
-            onChangeText={setFullName}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email</Text>
-          <TextInput
-            style={styles.input}
-            value={email}
-            keyboardType="email-address"
-            onChangeText={setEmail}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Mot de passe</Text>
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              placeholder="Entrez votre mot de passe"
+  const renderInputField = (label, value, setValue, keyboardType = 'default', secure = false) => (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={[
+        styles.inputContainer,
+        activeField === label && styles.activeInputContainer
+      ]}>
+        {label === 'Nom complet' && (
+          <Ionicons name="person-outline" size={20} color={activeField === label ? COLORS.greenPrimary : COLORS.grayDark} style={styles.inputIcon} />
+        )}
+        {label === 'Email' && (
+          <Ionicons name="mail-outline" size={20} color={activeField === label ? COLORS.greenPrimary : COLORS.grayDark} style={styles.inputIcon} />
+        )}
+        {label === 'Mot de passe' && (
+          <Ionicons name="lock-closed-outline" size={20} color={activeField === label ? COLORS.greenPrimary : COLORS.grayDark} style={styles.inputIcon} />
+        )}
+        
+        <TextInput
+          style={styles.input}
+          value={value}
+          onChangeText={setValue}
+          keyboardType={keyboardType}
+          secureTextEntry={secure && !showPassword}
+          placeholder={`Entrez votre ${label.toLowerCase()}`}
+          placeholderTextColor={COLORS.grayMedium}
+          onFocus={() => setActiveField(label)}
+          onBlur={() => setActiveField('')}
+        />
+        
+        {label === 'Mot de passe' && (
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+            <Ionicons 
+              name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+              size={20} 
+              color={activeField === label ? COLORS.greenPrimary : COLORS.grayDark} 
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-              <Ionicons name={showPassword ? 'eye-off' : 'eye'} size={20} color={COLORS.grayDark} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={28} color={COLORS.white} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Modifier le profil</Text>
+        <View style={styles.placeholderButton} />
+      </View>
+      
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <View style={styles.profileHeader}>
+            <TouchableOpacity style={styles.imageContainer} onPress={pickImage}>
+              {image ? (
+                <Image source={{ uri: image }} style={styles.profileImage} />
+              ) : (
+                <View style={styles.defaultImage}>
+                  <Text style={styles.initials}>PD</Text>
+                </View>
+              )}
+              <View style={styles.editIconContainer}>
+                <View style={styles.editIcon}>
+                  <Ionicons name="camera" size={16} color={COLORS.white} />
+                </View>
+              </View>
+            </TouchableOpacity>
+            
+            <Text style={styles.changeText}>Changer la photo</Text>
+          </View>
+
+          <View style={styles.formContainer}>
+            {renderInputField('Nom complet', fullName, setFullName)}
+            {renderInputField('Email', email, setEmail, 'email-address')}
+            {renderInputField('Mot de passe', password, setPassword, 'default', true)}
+          </View>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
+              <Text style={styles.cancelText}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveText}>Enregistrer</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.cancelText}>Annuler</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Text style={styles.saveText}>Enregistrer</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -105,108 +133,173 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.greenPrimary,
-    padding: 20,
+    paddingTop:SIZES.xLarge
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: COLORS.greenPrimary,
+  },
+  backButton: {
+    padding: 8,
+  },
+  headerTitle: {
     color: COLORS.white,
-    fontSize: SIZES.xLarge,
+    fontSize: SIZES.large,
     fontFamily: FONTS.bold,
-    marginBottom: 20,
+  },
+  placeholderButton: {
+    width: 44,
+    height: 44,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 20,
-  },
-  imageContainer: {
-    alignItems: 'center',
+    borderRadius: 24,
+    padding: 24,
+    marginTop: 16,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 10,
     marginBottom: 20,
   },
+  profileHeader: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  imageContainer: {
+    position: 'relative',
+    marginBottom: 12,
+  },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: COLORS.white,
   },
   defaultImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     backgroundColor: COLORS.greenSecondary,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
+    borderWidth: 3,
+    borderColor: COLORS.white,
   },
-  editIcon: {
+  initials: {
+    fontSize: SIZES.xLarge + 8,
+    fontFamily: FONTS.bold,
+    color: COLORS.white,
+  },
+  editIconContainer: {
     position: 'absolute',
     bottom: 0,
     right: 0,
+  },
+  editIcon: {
     backgroundColor: COLORS.greenPrimary,
-    borderRadius: 12,
-    padding: 4,
+    borderRadius: 18,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: COLORS.white,
   },
   changeText: {
-    marginTop: 10,
-    color: COLORS.grayDark,
-    fontFamily: FONTS.regular,
+    color: COLORS.greenPrimary,
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.medium,
+  },
+  formContainer: {
+    marginBottom: 20,
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 20,
   },
   label: {
     fontFamily: FONTS.medium,
-    marginBottom: 5,
-    color: COLORS.black,
+    fontSize: SIZES.small + 2,
+    marginBottom: 8,
+    color: COLORS.grayDark,
+    paddingLeft: 4,
   },
-  input: {
-    backgroundColor: COLORS.grayLight,
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    fontFamily: FONTS.regular,
-  },
-  passwordContainer: {
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.grayLight,
-    borderRadius: 10,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    paddingHorizontal: 16,
   },
-  passwordInput: {
+  activeInputContainer: {
+    borderColor: COLORS.greenPrimary,
+    backgroundColor: `${COLORS.greenPrimary}10`,
+  },
+  inputIcon: {
+    marginRight: 12,
+  },
+  input: {
     flex: 1,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingVertical: 14,
     fontFamily: FONTS.regular,
+    fontSize: SIZES.medium,
+    color: COLORS.black,
   },
   eyeIcon: {
-    paddingHorizontal: 10,
+    padding: 10,
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
   },
   cancelButton: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
     backgroundColor: COLORS.grayLight,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
-  },
-  cancelText: {
-    fontFamily: FONTS.medium,
-    color: COLORS.black,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 2,
   },
   saveButton: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 12,
     backgroundColor: COLORS.greenPrimary,
-    paddingVertical: 12,
-    borderRadius: 10,
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
+    shadowColor: COLORS.greenPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cancelText: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.medium,
+    color: COLORS.grayDark,
   },
   saveText: {
-    fontFamily: FONTS.medium,
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.medium,
     color: COLORS.white,
   },
 });
-

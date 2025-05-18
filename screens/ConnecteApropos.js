@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Animated,
+} from 'react-native';
 import { COLORS, SIZES, FONTS } from '../constants/theme';
 import Logo from '../assets/images/logo.png';
+import emailjsConfig from '../config/emailjsConfig';
 
 const ConnecteApropos = () => {
   const [form, setForm] = useState({
@@ -9,18 +23,40 @@ const ConnecteApropos = () => {
     email: '',
     message: '',
   });
+  const [isSending, setIsSending] = useState(false);
+  const [errors, setErrors] = useState({});
+  const fadeAnim = useState(new Animated.Value(0))[0];
+  
+  // Animation au chargement du composant
+  React.useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 800,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!form.name.trim()) newErrors.name = 'Le nom est requis';
+    
+    if (!form.email.trim()) {
+      newErrors.email = 'L\'email est requis';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors.email = 'Format d\'email invalide';
+    }
+    
+    if (!form.message.trim()) newErrors.message = 'Le message est requis';
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSend = async () => {
-    if (!form.name || !form.email || !form.message) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
-      return;
-    }
-
-    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-    if (!isEmailValid) {
-      Alert.alert('Erreur', 'Adresse email invalide.');
-      return;
-    }
+    if (!validateForm()) return;
+    
+    setIsSending(true);
 
     const templateParams = {
       from_name: form.name,
@@ -35,9 +71,9 @@ const ConnecteApropos = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          service_id: 'service_ig1cyoh',
-          template_id: 'template_rppitns',
-          user_id: 'lATVcnhDWv9xoU2qM',
+          service_id: emailjsConfig.service_id,
+          template_id: emailjsConfig.template_id,
+          user_id: emailjsConfig.user_id,
           template_params: templateParams,
         }),
       });
@@ -61,155 +97,361 @@ const ConnecteApropos = () => {
         }
 
         Alert.alert('Erreur', messageErreur);
-        return;
+      } else {
+        Alert.alert('Succès', 'Message envoyé avec succès !');
+        setForm({ name: '', email: '', message: '' });
       }
-
-      Alert.alert('Succès', 'Message envoyé avec succès !');
-      setForm({ name: '', email: '', message: '' });
-
     } catch (error) {
       console.error('Erreur réseau ou système :', error);
       Alert.alert('Erreur', "Erreur réseau : impossible d'envoyer le message.");
+    } finally {
+      setIsSending(false);
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.card}>
-        <Image source={Logo} style={styles.logoImage} />
-        <Text style={styles.title}>Ma Couveuse Connectée</Text>
-        <Text style={styles.paragraph1}>
-          Le projet <Text style={styles.bold}>Ma Couveuse Connectée</Text> a pour objectif de développer une couveuse intelligente capable d’assurer l’incubation des œufs dans des conditions optimales. Concrètement, cela signifie que la couveuse est dotée de capteurs et de systèmes de contrôle permettant de surveiller en temps réel des paramètres essentiels comme la température, l’humidité ou encore le retournement des œufs.
-        </Text>
-        <Text style={styles.subtitle}>Notre Innovation</Text>
-        <Text style={styles.paragraph}>
-          Grâce à des capteurs intégrés et un système de contrôle automatisé, la couveuse régule la température, l'humidité et le retournement des œufs afin de maximiser les chances d'éclosion.
-        </Text>
-        <Text style={styles.subtitle}>Notre Démarche</Text>
-        <Text style={styles.paragraph}>
-          Ce projet innovant, mené dans le cadre d'une formation en objets connectés, allie électronique, programmation et conception pratique pour offrir une solution accessible aux éleveurs amateurs et passionnés.
-        </Text>
-        <Text style={styles.subtitle}>Notre Ambition</Text>
-        <Text style={styles.paragraph}>
-          Rendre l'incubation plus simple, plus efficace et plus connectée.
-        </Text>
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: COLORS.greenPrimary }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        contentContainerStyle={styles.container} 
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View style={[styles.heroSection, { opacity: fadeAnim }]}>
+          <Image source={Logo} style={styles.logoImage} />
+          <Text style={styles.heroTitle}>F9asti</Text>
+          <Text style={styles.heroSubtitle}>Solutions d'incubation intelligentes</Text>
+        </Animated.View>
 
-      {/* Section Contact */}
-      <View style={styles.card}>
-        <Text style={styles.title}>Contactez-nous</Text>
+        <Animated.View 
+          style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [50, 0]
+          })}] }]}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLine} />
+            <Text style={styles.cardHeaderText}>À PROPOS DE NOUS</Text>
+            <View style={styles.cardHeaderLine} />
+          </View>
+          
+          <Text style={styles.paragraph1}>
+            <Text style={styles.bold}>F9asti</Text> est une entreprise innovante spécialisée dans le développement de couveuses intelligentes, conçues pour garantir une incubation optimale des œufs. Nos solutions intégrées reposent sur des capteurs de pointe et des systèmes automatisés, permettant un contrôle en temps réel des paramètres cruciaux.
+          </Text>
 
-        <Text style={styles.label}>Nom complet</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Votre nom"
-          placeholderTextColor={COLORS.grayMedium}
-          value={form.name}
-          onChangeText={(text) => setForm({ ...form, name: text })}
-        />
+          <View style={styles.featureSection}>
+            <View style={styles.feature}>
+              <View style={styles.featureIconBox}>
+                <Text style={styles.featureIcon}>🔬</Text>
+              </View>
+              <Text style={styles.featureTitle}>Notre Innovation</Text>
+              <Text style={styles.featureDesc}>
+                Technologie avancée alliant électronique et programmation pour une régulation automatique des conditions d'incubation, optimisant ainsi le taux d'éclosion.
+              </Text>
+            </View>
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="votre.email@example.com"
-          placeholderTextColor={COLORS.grayMedium}
-          keyboardType="email-address"
-          value={form.email}
-          onChangeText={(text) => setForm({ ...form, email: text })}
-        />
+            <View style={styles.feature}>
+              <View style={styles.featureIconBox}>
+                <Text style={styles.featureIcon}>🤝</Text>
+              </View>
+              <Text style={styles.featureTitle}>Notre Engagement</Text>
+              <Text style={styles.featureDesc}>
+                Des solutions fiables, accessibles et performantes qui facilitent le travail des éleveurs, intégrant les dernières innovations technologiques.
+              </Text>
+            </View>
 
-        <Text style={styles.label}>Message</Text>
-        <TextInput
-          style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
-          placeholder="Votre message..."
-          placeholderTextColor={COLORS.grayMedium}
-          multiline
-          value={form.message}
-          onChangeText={(text) => setForm({ ...form, message: text })}
-        />
+            <View style={styles.feature}>
+              <View style={styles.featureIconBox}>
+                <Text style={styles.featureIcon}>🔭</Text>
+              </View>
+              <Text style={styles.featureTitle}>Notre Vision</Text>
+              <Text style={styles.featureDesc}>
+                Devenir le leader national de la couveuse intelligente, en modernisant le secteur de l'élevage avicole pour une incubation plus précise et connectée.
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
 
-        <View style={styles.buttonRow}>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => setForm({ name: '', email: '', message: '' })}>
-            <Text style={styles.cancelText}>Annuler</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendText}>Envoyer</Text>
-          </TouchableOpacity>
+        {/* Section Contact */}
+        <Animated.View 
+          style={[styles.card, styles.contactCard, { opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [50, 0]
+          })}] }]}
+        >
+          <View style={styles.cardHeader}>
+            <View style={styles.cardHeaderLine} />
+            <Text style={styles.cardHeaderText}>CONTACTEZ-NOUS</Text>
+            <View style={styles.cardHeaderLine} />
+          </View>
+          
+          <Text style={styles.contactIntro}>
+            Vous avez une question ou souhaitez en savoir plus sur nos produits? 
+            N'hésitez pas à nous contacter directement.
+          </Text>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Nom complet</Text>
+            <TextInput
+              style={[styles.input, errors.name ? styles.inputError : null]}
+              placeholder="Votre nom"
+              placeholderTextColor={COLORS.grayMedium}
+              value={form.name}
+              onChangeText={(text) => {
+                setForm({ ...form, name: text });
+                if (errors.name) setErrors({...errors, name: null});
+              }}
+              autoCorrect={false}
+            />
+            {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Email</Text>
+            <TextInput
+              style={[styles.input, errors.email ? styles.inputError : null]}
+              placeholder="votre.email@example.com"
+              placeholderTextColor={COLORS.grayMedium}
+              keyboardType="email-address"
+              value={form.email}
+              onChangeText={(text) => {
+                setForm({ ...form, email: text });
+                if (errors.email) setErrors({...errors, email: null});
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {errors.email ? <Text style={styles.errorText}>{errors.email}</Text> : null}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Message</Text>
+            <TextInput
+              style={[
+                styles.input, 
+                styles.textArea, 
+                errors.message ? styles.inputError : null
+              ]}
+              placeholder="Votre message..."
+              placeholderTextColor={COLORS.grayMedium}
+              multiline
+              value={form.message}
+              onChangeText={(text) => {
+                setForm({ ...form, message: text });
+                if (errors.message) setErrors({...errors, message: null});
+              }}
+            />
+            {errors.message ? <Text style={styles.errorText}>{errors.message}</Text> : null}
+          </View>
+
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setForm({ name: '', email: '', message: '' });
+                setErrors({});
+              }}
+              activeOpacity={0.7}
+              disabled={isSending}
+            >
+              <Text style={styles.cancelText}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.sendButton, isSending ? styles.sendingButton : null]}
+              onPress={handleSend}
+              activeOpacity={0.7}
+              disabled={isSending}
+            >
+              {isSending ? (
+                <ActivityIndicator size="small" color={COLORS.white} />
+              ) : (
+                <Text style={styles.sendText}>Envoyer</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© {new Date().getFullYear()} F9asti. Tous droits réservés.</Text>
         </View>
-      </View>
-      
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: COLORS.greenPrimary,
+    paddingBottom: 40,
+  },
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingVertical: 20,
+  },
+  logoImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 30,
+    alignSelf: 'center',
+    marginBottom: 16,
+    resizeMode: 'contain',
+    borderWidth: 3,
+    borderColor: COLORS.white,
+  },
+  heroTitle: {
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.xLarge * 1.5,
+    color: COLORS.white,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.medium,
+    color: COLORS.white,
+    opacity: 0.85,
   },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+    // Ombre (iOS)
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    // Ombre (Android)
+    elevation: 8,
+  },
+  contactCard: {
+    paddingVertical: 30,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  cardHeaderLine: {
+    height: 1,
+    backgroundColor: COLORS.grayLight,
+    flex: 1,
+  },
+  cardHeaderText: {
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.medium,
+    color: COLORS.textPrimary,
+    marginHorizontal: 12,
+    letterSpacing: 1,
   },
   title: {
     fontFamily: FONTS.bold,
-    fontSize: SIZES.xLarge,
+    fontSize: SIZES.xLarge + 2,
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
     color: COLORS.textPrimary,
-  },
-  subtitle: {
-    fontFamily: FONTS.semiBold,
-    fontSize: SIZES.large,
-    marginTop: 16,
-    marginBottom: 4,
-    color: COLORS.textPrimary,
-  },
-  paragraph: {
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.medium,
-    color: COLORS.textSecondary,
-    lineHeight: 22,
-    textAlign: 'justify',
   },
   paragraph1: {
     fontFamily: FONTS.regular,
-    fontSize: 14,
+    fontSize: SIZES.medium,
     color: COLORS.textSecondary,
-    lineHeight: 22,
+    lineHeight: 26,
     textAlign: 'justify',
+    marginBottom: 20,
   },
   bold: {
     fontFamily: FONTS.bold,
     color: COLORS.textPrimary,
   },
+  featureSection: {
+    marginTop: 10,
+  },
+  feature: {
+    marginBottom: 24,
+  },
+  featureIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 15,
+    backgroundColor: COLORS.greenPrimary + '20', // 20% opacity
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  featureIcon: {
+    fontSize: 24,
+  },
+  featureTitle: {
+    fontFamily: FONTS.semiBold,
+    fontSize: SIZES.medium + 2,
+    marginBottom: 8,
+    color: COLORS.textPrimary,
+  },
+  featureDesc: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.medium,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
+  },
+  contactIntro: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.medium,
+    color: COLORS.textSecondary,
+    marginBottom: 24,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
   label: {
     fontFamily: FONTS.medium,
     fontSize: SIZES.medium,
     color: COLORS.textPrimary,
-    marginTop: 10,
-    marginBottom: 4,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: COLORS.bgInput,
-    borderRadius: 8,
-    padding: 10,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: SIZES.medium,
     fontFamily: FONTS.regular,
     color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.small + 1,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  textArea: {
+    height: 120,
+    textAlignVertical: 'top',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: 24,
   },
   cancelButton: {
     backgroundColor: COLORS.grayLight,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 15,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    flex: 1,
+    marginRight: 10,
+    alignItems: 'center',
   },
   cancelText: {
     fontFamily: FONTS.medium,
@@ -217,23 +459,37 @@ const styles = StyleSheet.create({
     fontSize: SIZES.medium,
   },
   sendButton: {
-    backgroundColor: COLORS.bgButton,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    backgroundColor: COLORS.greenPrimary,
+    paddingVertical: 15,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    flex: 1,
+    marginLeft: 10,
+    alignItems: 'center',
+    shadowColor: COLORS.greenPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  sendingButton: {
+    opacity: 0.8,
   },
   sendText: {
     fontFamily: FONTS.medium,
-    color: COLORS.textLight,
+    color: COLORS.white,
     fontSize: SIZES.medium,
   },
-  logoImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginBottom: 16,
-    resizeMode: 'cover',
+  footer: {
+    marginTop: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.small + 1,
+    color: COLORS.white,
+    opacity: 0.8,
   },
 });
 
