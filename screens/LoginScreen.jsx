@@ -62,7 +62,6 @@ const LoginScreen = () => {
   // ==========================
   const fadeAnimHeader = useRef(new Animated.Value(0)).current;
   const slideAnimForm = useRef(new Animated.Value(50)).current;
-  const slideAnimGoogle = useRef(new Animated.Value(100)).current;
 
   useEffect(() => {
     Animated.timing(fadeAnimHeader, {
@@ -75,13 +74,6 @@ const LoginScreen = () => {
       toValue: 0,
       duration: 800,
       delay: 400,
-      useNativeDriver: true
-    }).start();
-
-    Animated.timing(slideAnimGoogle, {
-      toValue: 0,
-      duration: 800,
-      delay: 700,
       useNativeDriver: true
     }).start();
   }, []);
@@ -226,42 +218,6 @@ const handleLogin = async () => {
           </View>
         </Animated.View>
 
-        {/* ====== ALTERNATIVE AVEC GOOGLE ====== */}
-        <Animated.View style={{ transform: [{ translateY: slideAnimGoogle }], alignItems: 'center', gap: 25 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.bgWhite80 }} />
-            <Text style={{ color: COLORS.white, fontSize: SIZES.medium }}>
-              Ou continuez avec
-            </Text>
-            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.bgWhite80 }} />
-          </View>
-
-          <TouchableHighlight
-            underlayColor="lightgray"
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: COLORS.bgWhite20,
-              paddingVertical: 12,
-              paddingHorizontal: 24,
-              borderRadius: 14,
-              width: width - SIZES.xLarge - 10,
-              justifyContent: 'center',
-              gap: 12,
-            }}
-          >
-            <View style={styles.googleBtn}>
-              <Image
-                source={require('../assets/images/google.png')}
-                style={{ width: 24, height: 24 }}
-              />
-              <Text style={{ color: COLORS.white, fontSize: SIZES.medium }}>
-                Continuer avec Google
-              </Text>
-            </View>
-          </TouchableHighlight>
-        </Animated.View>
-
         {/* Toast visible ici */}
         <Toast />
       </SafeAreaView>
@@ -284,8 +240,8 @@ const styles = StyleSheet.create({
     gap: 12
   },
   image: {
-    width: 130,
-    height: 130
+    width: 150,
+    height: 180
   },
   desc: {
     color: COLORS.bgWhite80,
@@ -346,11 +302,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontWeight: '700',
-  },
-  googleBtn: {
-    flexDirection: 'row',
-    gap: 10
-  },
+  }
 });
 
 export default LoginScreen;

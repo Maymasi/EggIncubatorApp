@@ -1,4 +1,4 @@
-import { View,StyleSheet,Text, Pressable,TouchableOpacity,SafeAreaView  } from "react-native";
+import { View,StyleSheet,Text, Pressable,TouchableOpacity,SafeAreaView ,Image } from "react-native";
 import { useState,useContext } from "react";
 import {COLORS,SIZES} from "../../constants/theme";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -7,6 +7,8 @@ import { AuthContext } from '../../contexts/AuthContext';
 import { useNavigation } from "@react-navigation/native";
 
 export default function HeaderDetails(){
+        const link='../../assets/images/avatar.avif';
+
     const { 
   user,           // → { uid, email, displayName, farmName, couveusesGeres... }
   isLoading,      // → true/false
@@ -23,8 +25,13 @@ const navigation=useNavigation();
     return(
         <SafeAreaView style={styles.container}>
             <View style={styles.containerInfo}>
-                <View style={styles.pdp}>
-                </View>
+              <View style={styles.pdp}>
+                <Image
+                    source={require(link)}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                />
+                </View>  
                 <View>
                     <Text style={{color:COLORS.bgWhite80,fontWeight:400,fontSize:SIZES.large}}>Bonjour</Text>
                     <Text style={styles.name}>{user.displayName}</Text>
@@ -63,13 +70,13 @@ const styles = StyleSheet.create({
         display:"flex",
         flexDirection:"row",
         alignItems:"center",
-        gap:SIZES.x
+        gap:SIZES.xLarge
     },
     pdp : {
         backgroundColor:COLORS.grayLight,
         height:60,
         width:60,
-        borderRadius:"50%"
+        borderRadius:30
     },
     name:{
         fontSize:SIZES.xLarge,
@@ -87,6 +94,11 @@ const styles = StyleSheet.create({
         padding:10,
         borderRadius:"50%"
     },
+      avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
     badge: {
     position: 'absolute',
     top: -4,
