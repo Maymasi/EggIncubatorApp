@@ -1,10 +1,14 @@
-import { View,StyleSheet,Text, Pressable,TouchableOpacity  } from "react-native";
+import { View,StyleSheet,Text, Pressable,TouchableOpacity,SafeAreaView ,Image } from "react-native";
 import { useState,useContext } from "react";
 import {COLORS,SIZES} from "../../constants/theme";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { AuthContext } from '../../contexts/AuthContext';
+import { useNavigation } from "@react-navigation/native";
 
 export default function HeaderDetails(){
+        const link='../../assets/images/avatar.avif';
+
     const { 
   user,           // → { uid, email, displayName, farmName, couveusesGeres... }
   isLoading,      // → true/false
@@ -14,15 +18,20 @@ export default function HeaderDetails(){
   logout,         // => () => Promise
   refreshUser     // → Force la mise à jour des données
 } = useContext(AuthContext);
-
+const navigation=useNavigation();
     const [hovered, setHovered] = useState(false);
     const [notifVal , setnotifVal] = useState(3);
     const [userName, setUserName]= useState("Pierre Dupont");
     return(
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <View style={styles.containerInfo}>
-                <View style={styles.pdp}>
-                </View>
+              <View style={styles.pdp}>
+                <Image
+                    source={require(link)}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                />
+                </View>  
                 <View>
                     <Text style={{color:COLORS.bgWhite80,fontWeight:400,fontSize:SIZES.large}}>Bonjour</Text>
                     <Text style={styles.name}>{user.displayName}</Text>
@@ -32,14 +41,17 @@ export default function HeaderDetails(){
                 <TouchableOpacity
                     style={styles.notifContainer}
                     activeOpacity={0.4}
+                    onPress={()=>{
+                        navigation.navigate('Profile')
+                    }}
                 >
-                    <Ionicons name="notifications-outline" color="white" size={25}/>
+                    <FontAwesome5 name="user-cog" size={24} color="white" />
                     <View style={styles.badge}>
-                        <Text style={styles.badgeText}>{notifVal}</Text>
+                        <AntDesign name="dingding" size={13} color="white" />
                     </View>
                 </TouchableOpacity>
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 const styles = StyleSheet.create({
@@ -58,13 +70,13 @@ const styles = StyleSheet.create({
         display:"flex",
         flexDirection:"row",
         alignItems:"center",
-        gap:SIZES.x
+        gap:SIZES.xLarge
     },
     pdp : {
         backgroundColor:COLORS.grayLight,
         height:60,
         width:60,
-        borderRadius:"50%"
+        borderRadius:30
     },
     name:{
         fontSize:SIZES.xLarge,
@@ -82,11 +94,16 @@ const styles = StyleSheet.create({
         padding:10,
         borderRadius:"50%"
     },
+      avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
     badge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: 'red',
+    backgroundColor: COLORS.orange,
     borderRadius: 10,
     width: 20,
     height: 20,

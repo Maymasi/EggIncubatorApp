@@ -111,6 +111,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUserData,
         refreshUser: () => currentUser && updateUserData(currentUser)
       }}
     >

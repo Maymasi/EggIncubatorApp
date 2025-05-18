@@ -1,4 +1,4 @@
-import { ref, get, update,onValue,off } from 'firebase/database';
+import { ref, get, update,onValue,off,remove } from 'firebase/database';
 import { database } from '../config/firebase';
 
 /**
@@ -34,7 +34,28 @@ export const addCouveuse = async (userId, identifiant, dataCouveuse) => {
 };
 
 
+/**
+ * Supprime une couveuse de la liste des couveuses gérées par un utilisateur
+ * 
+ * @param {string} userId - L'ID Firebase de l'utilisateur
+ * @param {string} identifiant - Identifiant unique de la couveuse à supprimer
+ * @throws {Error} en cas d'erreur de validation ou Firebase
+ */
+export const deleteCouveuse = async (userId, identifiant) => {
+  if (!userId) throw new Error('Utilisateur non connecté');
+  if (!identifiant) throw new Error('Identifiant de couveuse requis');
 
+  // Vérifie si l'utilisateur gère bien cette couveuse
+  const userCouveuseRef = ref(database, `users/${userId}/couveusesGereses/${identifiant}`);
+  const userSnapshot = await get(userCouveuseRef);
+  
+  if (!userSnapshot.exists()) {
+    throw new Error('Cette couveuse n\'est pas dans votre liste.');
+  }
+
+  // Supprime la couveuse de la liste des couveuses gérées par l'utilisateur
+  await remove(userCouveuseRef);
+};
 
 export function listenToCouveusesGereesParUser(userId, callback) {
   if (!userId) return;

@@ -1,8 +1,11 @@
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  updateEmail,
+  updatePassword
 } from 'firebase/auth';
+
 import { ref, set, update, get } from 'firebase/database';
 import { auth, database } from '../config/firebase';
 
@@ -36,7 +39,6 @@ export const registerUser = async (email, password, fullName, farmName) => {
     return user;
 
   } catch (error) {
-    console.error("Erreur inscription:", error);
     throw new Error(`Échec inscription: ${error.message}`);
   }
 };
@@ -57,11 +59,51 @@ export const loginUser = async (email, password) => {
     return userCredential.user;
 
   } catch (error) {
-    console.error("Erreur connexion:", {
-      message: error.message,
-      code: error.code,
-      stack: error.stack
-    });
+    // console.error("Erreur connexion:", {
+    //   message: error.message,
+    //   code: error.code,
+    //   stack: error.stack
+    // });
+    throw error;
+  }
+};
+export const updateUserProfile = async (userId, updates) => {
+  try {
+    // Vérification des données
+    if (!userId || !updates) {
+      throw new Error("Données manquantes pour la mise à jour");
+    }
+
+    // Mise à jour dans Firebase Auth (si email ou mot de passe)
+    const user = auth.currentUser;
+    
+    if (updates.email) {
+      await updateEmail(user, updates.email);
+    }
+    
+    if (updates.password) {
+      await updatePassword(user, updates.password);
+    }
+    
+    if (updates.displayName) {
+      await updateProfile(user, {
+        displayName: updates.displayName
+      });
+    }
+
+    // Mise à jour dans la Realtime Database
+    const userRef = ref(database, `users/${userId}`);
+    const dbUpdates = {};
+    
+    if (updates.fullName) dbUpdates.fullName = updates.fullName;
+    if (updates.farmName) dbUpdates.farmName = updates.farmName;
+    
+    if (Object.keys(dbUpdates).length > 0) {
+      await update(userRef, dbUpdates);
+    }
+
+    return auth.currentUser; 
+  } catch (error) {
     throw error;
   }
 };

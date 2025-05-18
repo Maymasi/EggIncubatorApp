@@ -34,7 +34,7 @@ export default function Controle({ id }) {
   useEffect(() => {
     const stopListening = listenToCouveuseConfig(id, (config) => {
       if (config) {
-        setIsAuto(config.mode === "auto" && config.fanMode === "auto");
+        setIsAuto(config.mode === "automatique" && config.fanMode === "automatique");
         setIsVentilateur(config.fanState === "on");
       }
     });
@@ -45,8 +45,8 @@ export default function Controle({ id }) {
   const handleToggleAuto = async (value) => {
     setIsAuto(value);
     await updateCouveuseConfig(id, {
-      mode: value ? "auto" : "manual",
-      fanMode: value ? "auto" : "manual"
+      mode: value ? "automatique" : "manuel",
+      fanMode: value ? "automatique" : "manuel"
     });
   };
 
