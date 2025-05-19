@@ -55,11 +55,12 @@ export default function Localisation(){
                 </View>
                 <View>
                     <Text>{date}</Text>
-                    {address ? (
+                    {/* {address ? (
                         <Text  style={{fontSize:SIZES.xLarge,fontWeight:700}}>{address.city}</Text>
                         ) : (
                         <Text>Chargement...</Text>
-                    )}
+                    )} */}
+                    <Text  style={{fontSize:SIZES.xLarge,fontWeight:700}}>Safi</Text>
                 </View>
             </View>
             <View style={styles.DateEtMeteo}>

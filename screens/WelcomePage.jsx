@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
         lineHeight: 32
     },
     desc: {
-        fontSize: SIZES.medium - 2,
+        fontSize: SIZES.large,
         color: 'white',
         fontFamily: FONTS.regular,
         textAlign: 'center',
