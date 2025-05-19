@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Dimensions, FlatList } from "react-native";
+import { View, Text, StyleSheet, Dimensions, FlatList, TouchableOpacity } from "react-native";
 import { LineChart } from 'react-native-chart-kit';
 import { SIZES, COLORS } from '../../../constants/theme';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -48,7 +48,34 @@ const getBackgroundColor = (type) => {
   }
 };
 
+// Fonction pour formater une date timestamp en format lisible
+const formatDate = (timestamp) => {
+  if (!timestamp) return "Non définie";
+  
+  const date = new Date(Number(timestamp));
+  return date.toLocaleDateString('fr-FR', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Fonction pour calculer le nombre de jours écoulés depuis le début de l'incubation
+const calculateDaysSinceIncubation = (timestamp) => {
+  if (!timestamp) return 0;
+  
+  const startDate = new Date(Number(timestamp));
+  const currentDate = new Date();
+  const diffTime = Math.abs(currentDate - startDate);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  
+  return diffDays;
+};
+
 export default function Historique() {
+  const [showAllEvents, setShowAllEvents] = useState(false);
   const { user } = useContext(AuthContext);
   const [alertes, setAlertes] = useState([]);
   const [actions, setActions] = useState([]);
@@ -57,6 +84,8 @@ export default function Historique() {
   const [items, setItems] = useState([]);
   const [dataTemp, setDataTemp] = useState({ labels: ["S1", "S2", "S3", "S4"], datasets: [{ data: [] }] });
   const [dataHum, setDataHum] = useState({ labels: ["S1", "S2", "S3", "S4"], datasets: [{ data: [] }] });
+  const [incubationStartDates, setIncubationStartDates] = useState({});
+  const [timeRange, setTimeRange] = useState('week'); // 'day', 'week', 'month'
   
   // Nouveaux états pour le sélecteur d'événements
   const [eventTypeOpen, setEventTypeOpen] = useState(false);
@@ -73,7 +102,8 @@ export default function Historique() {
       historiqueTemp,
       historiqueHum,
       evenements,
-      listeCouveuses
+      listeCouveuses,
+      couveusesGereses // Récupération de la structure couveusesGereses depuis Firebase
     }) => {
       // Séparation des événements en alertes et actions
       const newAlertes = [];
@@ -90,32 +120,72 @@ export default function Historique() {
       setAlertes(newAlertes);
       setActions(newActions);
 
-      // Mise à jour de la liste des couveuses
+      // Mise à jour de la liste des couveuses et des dates de début d'incubation
       const newItems = [
         { label: 'Toutes les couveuses', value: 'Toutes les couveuses' },
         ...(listeCouveuses || []).map(n => ({ label: n.nom, value: n.id }))
       ];
       setItems(newItems);
-      updateChartData(value, historiqueTemp || {}, historiqueHum || {});
+      
+      // Stockage des dates de début d'incubation pour chaque couveuse
+      const datesMap = {};
+    if (couveusesGereses) {
+      Object.keys(couveusesGereses).forEach(incubatorId => {
+        const incubatorData = couveusesGereses[incubatorId];
+        if (incubatorData?.dateAjout) {
+          datesMap[incubatorId] = incubatorData.dateAjout;
+        }
+      });
+    }
+      setIncubationStartDates(datesMap);
+      
+      updateChartData(value, historiqueTemp || {}, historiqueHum || {}, timeRange);
     });
 
     return () => unsubscribe();
-  }, [user?.uid, value]);
+  }, [user?.uid, value, timeRange]);
 
-  const updateChartData = (selectedValue, tempData, humData) => {
-    const getLimitedData = (arr) => arr.slice(0, 4).map(p => p.value);
+  const updateChartData = (selectedValue, tempData, humData, selectedTimeRange) => {
+    // Définir les labels en fonction de la plage de temps sélectionnée
+    let labels;
+    let dataLength;
+    
+    switch(selectedTimeRange) {
+      case 'day':
+        labels = ["6h", "12h", "18h", "24h"];
+        dataLength = 4;
+        break;
+      case 'month':
+        labels = ["S1", "S2", "S3", "S4"];
+        dataLength = 4;
+        break;
+      case 'week':
+      default:
+        labels = ["J1", "J2", "J3", "J4", "J5", "J6", "J7"];
+        dataLength = 7;
+        break;
+    }
+
+    const getLimitedData = (arr) => {
+      const limitedArr = arr.slice(0, dataLength);
+      // Si nous avons moins de données que nécessaire, remplir avec des valeurs null
+      while (limitedArr.length < dataLength) {
+        limitedArr.push({ value: null });
+      }
+      return limitedArr.map(p => p?.value || null);
+    };
 
     if (selectedValue === 'Toutes les couveuses') {
       const allTempPoints = Object.values(tempData).flat();
       const allHumPoints = Object.values(humData).flat();
 
       setDataTemp({
-        labels: ["S1", "S2", "S3", "S4"],
+        labels,
         datasets: [{ data: getLimitedData(allTempPoints), color: () => COLORS.orange, strokeWidth: 2 }]
       });
 
       setDataHum({
-        labels: ["S1", "S2", "S3", "S4"],
+        labels,
         datasets: [{ data: getLimitedData(allHumPoints), color: () => COLORS.blue, strokeWidth: 2 }]
       });
     } else {
@@ -123,12 +193,12 @@ export default function Historique() {
       const humPoints = humData[selectedValue] || [];
 
       setDataTemp({
-        labels: ["S1", "S2", "S3", "S4"],
+        labels,
         datasets: [{ data: getLimitedData(tempPoints), color: () => COLORS.orange, strokeWidth: 2 }]
       });
 
       setDataHum({
-        labels: ["S1", "S2", "S3", "S4"],
+        labels,
         datasets: [{ data: getLimitedData(humPoints), color: () => COLORS.blue, strokeWidth: 2 }]
       });
     }
@@ -154,6 +224,18 @@ export default function Historique() {
     </View>
   );
 
+  // Obtenir la date de début d'incubation pour la couveuse sélectionnée
+  const selectedIncubationDate = value !== "Toutes les couveuses" 
+    ? incubationStartDates[value]
+    : null;
+
+  // Options pour la sélection de la plage de temps
+  const timeRangeOptions = [
+    { label: 'Jour', value: 'day' },
+    { label: 'Semaine', value: 'week' },
+    { label: 'Mois', value: 'month' }
+  ];
+
   return (
     <View>
       <View style={styles.SelectCard}>
@@ -177,9 +259,43 @@ export default function Historique() {
       </View>
 
       <View style={styles.cardRepere}>
-        <Text style={{ fontSize: SIZES.xLarge, fontWeight: 'bold', marginBottom: 30 }}>
+        <Text style={{ fontSize: SIZES.xLarge, fontWeight: 'bold', marginBottom: 15 }}>
           Historique: {items.find(i => i.value === value)?.label || value}
         </Text>
+        
+        {value !== "Toutes les couveuses" && selectedIncubationDate && (
+          <View style={styles.incubationInfoContainer}>
+            <View style={styles.incubationInfoItem}>
+              <Text style={styles.incubationInfoLabel}>Début d'incubation:</Text>
+              <Text style={styles.incubationInfoValue}>{formatDate(selectedIncubationDate)}</Text>
+            </View>
+            <View style={styles.incubationInfoItem}>
+              <Text style={styles.incubationInfoLabel}>Durée:</Text>
+              <Text style={styles.incubationInfoValue}>{calculateDaysSinceIncubation(selectedIncubationDate)} jours</Text>
+            </View>
+          </View>
+        )}
+
+        <View style={styles.timeRangeContainer}>
+          {timeRangeOptions.map((option) => (
+            <TouchableOpacity
+              key={option.value}
+              style={[
+                styles.timeRangeButton,
+                timeRange === option.value && styles.timeRangeButtonActive
+              ]}
+              onPress={() => setTimeRange(option.value)}
+            >
+              <Text style={[
+                styles.timeRangeText,
+                timeRange === option.value && styles.timeRangeTextActive
+              ]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        
         <View>
           <Text style={{ marginBottom: 10, color: COLORS.bgBlack40 }}>Température (°C)</Text>
           <LineChart
@@ -206,9 +322,10 @@ export default function Historique() {
         </View>
       </View>
 
-      <View style={styles.notificationContainer}>
-        <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'start', marginBottom: 15,gap:SIZES.medium }}>
-          <Text style={{ fontSize: 21, fontWeight: 600 }}>Événements récents</Text>
+    <View style={styles.notificationContainer}>
+      <View style={{ flexDirection: 'column', justifyContent: 'space-between', alignItems: 'start', marginBottom: 15, gap: SIZES.medium }}>
+        <Text style={{ fontSize: 21, fontWeight: 600 }}>Événements récents</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SIZES.medium }}>
           <View style={{ width: 150 }}>
             <DropDownPicker
               open={eventTypeOpen}
@@ -224,34 +341,90 @@ export default function Historique() {
               textStyle={{ fontSize: 14 }}
             />
           </View>
+          {((eventTypeValue === 'alert' && filteredAlertes.length > 5) || 
+            (eventTypeValue === 'action' && filteredActions.length > 5)) && (
+            <TouchableOpacity 
+              onPress={() => setShowAllEvents(!showAllEvents)}
+              style={styles.showAllButton}
+            >
+              <Text style={styles.showAllText}>
+                {showAllEvents ? 'Voir moins' : 'Voir tout'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
-
-        {eventTypeValue === 'alert' ? (
-          filteredAlertes.length > 0 ? (
-            <FlatList
-              data={filteredAlertes}
-              keyExtractor={item => item.id}
-              renderItem={renderItem}
-            />
-          ) : (
-            <Text style={{ fontStyle: 'italic', color: COLORS.bgBlack30 }}>
-              Aucune alerte récente
-            </Text>
-          )
-        ) : (
-          filteredActions.length > 0 ? (
-            <FlatList
-              data={filteredActions}
-              keyExtractor={item => item.id}
-              renderItem={renderItem}
-            />
-          ) : (
-            <Text style={{ fontStyle: 'italic', color: COLORS.bgBlack30 }}>
-              Aucune action récente
-            </Text>
-          )
-        )}
       </View>
+
+      {eventTypeValue === 'alert' ? (
+        filteredAlertes.length > 0 ? (
+          <>
+            <FlatList
+              data={showAllEvents ? filteredAlertes : filteredAlertes.slice(0, 5)}
+              keyExtractor={item => item.id}
+              renderItem={renderItem}
+              ListFooterComponent={
+                filteredAlertes.length > 5 && !showAllEvents ? (
+                  <TouchableOpacity 
+                    onPress={() => setShowAllEvents(true)}
+                    style={styles.seeMoreContainer}
+                  >
+                    <Text style={styles.seeMoreText}>
+                      +{filteredAlertes.length - 5} autres alertes
+                    </Text>
+                  </TouchableOpacity>
+                ) : null
+              }
+            />
+            {showAllEvents && filteredAlertes.length > 5 && (
+              <TouchableOpacity 
+                onPress={() => setShowAllEvents(false)}
+                style={styles.seeMoreContainer}
+              >
+                <Text style={styles.seeMoreText}>Réduire la liste</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : (
+          <Text style={{ fontStyle: 'italic', color: COLORS.bgBlack30 }}>
+            Aucune alerte récente
+          </Text>
+        )
+      ) : (
+        filteredActions.length > 0 ? (
+          <>
+            <FlatList
+              data={showAllEvents ? filteredActions : filteredActions.slice(0, 5)}
+              keyExtractor={item => item.id}
+              renderItem={renderItem}
+              ListFooterComponent={
+                filteredActions.length > 5 && !showAllEvents ? (
+                  <TouchableOpacity 
+                    onPress={() => setShowAllEvents(true)}
+                    style={styles.seeMoreContainer}
+                  >
+                    <Text style={styles.seeMoreText}>
+                      +{filteredActions.length - 5} autres actions
+                    </Text>
+                  </TouchableOpacity>
+                ) : null
+              }
+            />
+            {showAllEvents && filteredActions.length > 5 && (
+              <TouchableOpacity 
+                onPress={() => setShowAllEvents(false)}
+                style={styles.seeMoreContainer}
+              >
+                <Text style={styles.seeMoreText}>Réduire la liste</Text>
+              </TouchableOpacity>
+            )}
+          </>
+        ) : (
+          <Text style={{ fontStyle: 'italic', color: COLORS.bgBlack30 }}>
+            Aucune action récente
+          </Text>
+        )
+      )}
+    </View>
     </View>
   );
 }
@@ -299,6 +472,56 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginTop: 20
   },
+  incubationInfoContainer: {
+    backgroundColor: COLORS.bgBlack5,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  incubationInfoItem: {
+    flexDirection: 'column',
+  },
+  incubationInfoLabel: {
+    fontSize: 14,
+    color: COLORS.bgBlack40,
+    marginBottom: 4
+  },
+  incubationInfoValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.black
+  },
+  timeRangeContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.bgBlack5,
+    borderRadius: 20,
+    marginBottom: 20,
+    padding: 3,
+  },
+  timeRangeButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 18,
+  },
+  timeRangeButtonActive: {
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  timeRangeText: {
+    fontSize: 14,
+    color: COLORS.bgBlack40,
+  },
+  timeRangeTextActive: {
+    fontWeight: '600',
+    color: COLORS.black,
+  },
   notificationContainer: {
     backgroundColor: "white",
     padding: 20,
@@ -326,5 +549,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center"
   },
+    seeMoreContainer: {
+    padding: 10,
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  seeMoreText: {
+    color: COLORS.blue,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  showAllButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: COLORS.bgBlack5,
+    borderRadius: 20,
+  },
+  showAllText: {
+    color: COLORS.blue,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+
   textContainer: {}
+  
 });
