@@ -9,6 +9,9 @@ import ProgressBar from '../ProgressBar';
 import { useState, useEffect,useContext } from 'react';
 import { listenToCouveuseConfig, updateCouveuseConfig, turnManualStateOn, listenToCouveuseCardData} from '../../../services/couveuseServices';
 import { AuthContext } from '../../../contexts/AuthContext';
+import { ref, update, get, onValue, off } from 'firebase/database';
+import { database } from '../../../config/firebase'; 
+
 
 export default function Controle({ id }) {
     const {user}=useContext(AuthContext);
@@ -56,15 +59,30 @@ export default function Controle({ id }) {
     await updateCouveuseConfig(id, { fanState: value ? "on" : "off" });
   };
 
-  // Bouton Tourner Maintenant
-  const handleRotation = async () => {
-    try {
-      await turnManualStateOn(id); // met manualState: "on" si besoin
-      setRotation(true);
-    } catch (error) {
-      console.error("Erreur lors de l'activation de la rotation :", error);
-    }
-  };
+// Bouton Tourner Maintenant
+
+const handleRotation = async () => {
+  try {
+    await turnManualStateOn(id); // met manualState: "on" si besoin
+    setRotation(true);
+
+    // Après 2 secondes, remet manualState à "off" dans Firebase et rotation à false
+    setTimeout(async () => {
+      try {
+        const configRef = ref(database, `Couveuses/${id}/Config`);
+        await update(configRef, { manualState: "off" });
+        setRotation(false);
+      } catch (error) {
+        console.error("Erreur lors de la désactivation de la rotation :", error);
+      }
+    }, 5000);
+    
+  } catch (error) {
+    console.error("Erreur lors de l'activation de la rotation :", error);
+  }
+};
+
+
 
   // Désactive les contrôles manuels si mode auto activé
   const isAutoMode = isAuto;
